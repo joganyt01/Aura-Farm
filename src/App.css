@@ -1,0 +1,281 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #080808;
+  color: white;
+  overflow-x: hidden;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* =========================
+   APP
+========================= */
+
+.app {
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* =========================
+   PANTALLA INICIAL
+========================= */
+
+.start-screen {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+}
+
+.start-content {
+  width: min(900px, 100%);
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 15px;
+  font-size: 14px;
+  letter-spacing: 4px;
+  opacity: 0.7;
+}
+
+.start-content h1 {
+  margin: 15px 0;
+  font-size: clamp(45px, 8vw, 100px);
+  line-height: 0.95;
+}
+
+.description {
+  max-width: 550px;
+  margin: 25px auto 35px;
+  font-size: clamp(16px, 2vw, 20px);
+  line-height: 1.5;
+  opacity: 0.7;
+}
+
+.start-button {
+  border: none;
+  padding: 18px 35px;
+  font-size: clamp(16px, 2vw, 19px);
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 10px;
+  min-height: 58px;
+  transition: transform 0.15s ease;
+}
+
+.start-button:hover {
+  transform: scale(1.05);
+}
+
+.start-button:active {
+  transform: scale(0.97);
+}
+
+/* =========================
+   PANTALLA DE CÁMARA
+========================= */
+.camera-screen {
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 15px 20px;
+  overflow: hidden;
+}
+
+
+.aura-header {
+  text-align: center;
+}
+
+.aura-header p {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 5px;
+  opacity: 0.7;
+}
+
+.aura-header h2 {
+  margin: 5px 0 0;
+  font-size: clamp(45px, 6vw, 70px);
+  line-height: 1;
+}
+
+/* =========================
+   CÁMARA
+========================= */
+
+.camera-container {
+  position: relative;
+  width: min(900px, 90vw);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #151515;
+  flex-shrink: 1;
+}
+
+.camera-container video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+
+.camera-message {
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 768px) {
+  .camera-screen {
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .aura-header {
+    flex-shrink: 0;
+  }
+
+  .aura-header h2 {
+    font-size: 40px;
+  }
+
+  .camera-container {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+  }
+
+  .camera-message {
+    font-size: 14px;
+    padding: 0 5px;
+  }
+}
+
+/* =========================
+   CELULARES
+========================= */
+
+@media (max-width: 480px) {
+  .start-screen {
+    padding: 20px 15px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+  }
+
+  .start-content h1 {
+    font-size: clamp(38px, 13vw, 58px);
+    margin: 12px 0;
+  }
+
+  .description {
+    font-size: 15px;
+    max-width: 330px;
+    margin-bottom: 25px;
+  }
+
+  .start-button {
+    width: 100%;
+    max-width: 330px;
+    padding: 16px 20px;
+    font-size: 16px;
+  }
+
+  .camera-screen {
+    padding: 15px 10px 25px;
+    gap: 12px;
+  }
+
+  .aura-header p {
+    font-size: 11px;
+    letter-spacing: 4px;
+  }
+
+  .aura-header h2 {
+    font-size: 42px;
+  }
+
+  .camera-container {
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .camera-message {
+    padding: 0 10px;
+    font-size: 14px;
+  }
+}
+
+/* =========================
+   CELULAR HORIZONTAL
+========================= */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .start-screen {
+    padding: 15px;
+  }
+
+  .start-content h1 {
+    font-size: 45px;
+  }
+
+  .description {
+    margin: 10px auto 15px;
+  }
+
+  .start-button {
+    min-height: 45px;
+    padding: 10px 25px;
+  }
+
+  .camera-screen {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .aura-header h2 {
+    font-size: 35px;
+  }
+
+  .camera-container {
+    max-height: 70vh;
+    width: auto;
+    max-width: 95vw;
+  }
+}
