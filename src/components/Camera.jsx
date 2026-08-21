@@ -4,6 +4,7 @@ import useMotionDetection from "../hooks/useMotionDetection";
 function Camera() {
   const videoRef = useRef(null);
 const lastAuraTimeRef = useRef(0);
+const [displayMotion, setDisplayMotion] = useState(0);
   const [cameraError, setCameraError] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
 
@@ -65,6 +66,14 @@ useEffect(() => {
     };
   }, []);
 
+  useEffect(() => {
+  const timer = setTimeout(() => {
+    setDisplayMotion(motion);
+  }, 150);
+
+  return () => clearTimeout(timer);
+}, [motion]);
+
   return (
     <section className="camera-screen">
       <div className="aura-header">
@@ -81,7 +90,7 @@ useEffect(() => {
         <div className="debug-panel">
   <div>
     <span>MOVIMIENTO</span>
-    <strong>{motion}</strong>
+    <strong>{displayMotion}</strong>
   </div>
 
   <div>
@@ -93,13 +102,13 @@ useEffect(() => {
     <span>ESTADO</span>
 
     <strong>
-      {motion < 10
-        ? "🗿 QUIETO"
-        : motion < 30
-        ? "👋 MOVIMIENTO"
-        : motion < 60
-        ? "🔥 MOVIMIENTO FUERTE"
-        : "⚡ MOVIMIENTO EXTREMO"}
+      {displayMotion < 10
+  ? "🗿 QUIETO"
+  : displayMotion < 30
+  ? "👋 MOVIMIENTO"
+  : displayMotion < 60
+  ? "🔥 MOVIMIENTO FUERTE"
+  : "⚡ MOVIMIENTO EXTREMO"}
     </strong>
   </div>
 </div>
