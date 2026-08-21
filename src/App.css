@@ -185,6 +185,35 @@ button {
   }
 }
 
+.debug-panel {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.debug-panel div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #151515;
+  border: 1px solid #292929;
+}
+
+.debug-panel span {
+  font-size: 9px;
+  letter-spacing: 1px;
+  opacity: 0.5;
+}
+
+.debug-panel strong {
+  font-size: 13px;
+}
+
 /* =========================
    CELULARES
 ========================= */
@@ -239,6 +268,19 @@ button {
   .camera-message {
     padding: 0 10px;
     font-size: 14px;
+  }
+
+   .debug-panel {
+    gap: 5px;
+    margin-top: 8px;
+  }
+
+  .debug-panel div {
+    padding: 5px 8px;
+  }
+
+  .debug-panel strong {
+    font-size: 11px;
   }
 }
 

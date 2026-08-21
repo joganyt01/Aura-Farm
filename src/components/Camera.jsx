@@ -77,7 +77,35 @@ useEffect(() => {
         <span>
           ⚡ COMBO x{Math.max(combo, 1)}
         </span>
+
+        <div className="debug-panel">
+  <div>
+    <span>MOVIMIENTO</span>
+    <strong>{motion}</strong>
+  </div>
+
+  <div>
+    <span>COMBO</span>
+    <strong>x{Math.max(combo, 1)}</strong>
+  </div>
+
+  <div>
+    <span>ESTADO</span>
+
+    <strong>
+      {motion < 10
+        ? "🗿 QUIETO"
+        : motion < 30
+        ? "👋 MOVIMIENTO"
+        : motion < 60
+        ? "🔥 MOVIMIENTO FUERTE"
+        : "⚡ MOVIMIENTO EXTREMO"}
+    </strong>
+  </div>
+</div>
       </div>
+
+      
 
       <div className="camera-container">
         {cameraError ? (
