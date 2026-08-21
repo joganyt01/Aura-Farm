@@ -7,7 +7,26 @@ function Camera() {
   const [cameraError, setCameraError] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
 
+  const [aura, setAura] = useState(0);
+  const [combo, setCombo] = useState(0);
+
   const motion = useMotionDetection(videoRef, cameraReady);
+
+  useEffect(() => {
+    // Ignoramos el ruido normal de la cámara
+    if (motion < 8) {
+      setCombo((previous) => Math.max(previous - 1, 0));
+      return;
+    }
+
+    // El movimiento aumenta el combo
+    setCombo((previous) => Math.min(previous + 1, 20));
+
+    // Convertimos movimiento en aura
+    const auraGain = Math.floor(motion * (1 + combo * 0.1));
+
+    setAura((previous) => previous + auraGain);
+  }, [motion]);
 
   useEffect(() => {
     let stream;
@@ -41,7 +60,14 @@ function Camera() {
     <section className="camera-screen">
       <div className="aura-header">
         <p>AURA</p>
-        <h2>{motion}</h2>
+
+        <h2>
+          {aura.toLocaleString()}
+        </h2>
+
+        <span>
+          ⚡ COMBO x{Math.max(combo, 1)}
+        </span>
       </div>
 
       <div className="camera-container">
