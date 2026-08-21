@@ -217,60 +217,42 @@ button {
 /* =========================
    CELULARES
 ========================= */
-
 @media (max-width: 480px) {
-  .start-screen {
-    padding: 20px 15px;
-  }
-
-  .eyebrow {
-    font-size: 11px;
-    letter-spacing: 3px;
-  }
-
-  .start-content h1 {
-    font-size: clamp(38px, 13vw, 58px);
-    margin: 12px 0;
-  }
-
-  .description {
-    font-size: 15px;
-    max-width: 330px;
-    margin-bottom: 25px;
-  }
-
-  .start-button {
-    width: 100%;
-    max-width: 330px;
-    padding: 16px 20px;
-    font-size: 16px;
-  }
-
   .camera-screen {
-    padding: 15px 10px 25px;
-    gap: 12px;
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 10px;
+    gap: 8px;
+    justify-content: center;
   }
 
-  .aura-header p {
-    font-size: 11px;
-    letter-spacing: 4px;
+  .aura-header {
+    flex-shrink: 0;
   }
 
   .aura-header h2 {
-    font-size: 42px;
+    font-size: 38px;
   }
 
   .camera-container {
-    width: 100%;
-    border-radius: 12px;
+    width: auto;
+    height: min(52dvh, 560px);
+    aspect-ratio: 9 / 16;
+    max-width: 90vw;
+    border-radius: 14px;
+  }
+
+  .camera-container video {
+    object-fit: cover;
   }
 
   .camera-message {
-    padding: 0 10px;
-    font-size: 14px;
+    flex-shrink: 0;
+    font-size: 13px;
+    margin: 0;
   }
 
-   .debug-panel {
+  .debug-panel {
     gap: 5px;
     margin-top: 8px;
   }
