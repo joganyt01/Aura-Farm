@@ -3,7 +3,7 @@ import useMotionDetection from "../hooks/useMotionDetection";
 
 function Camera() {
   const videoRef = useRef(null);
-
+const lastAuraTimeRef = useRef(0);
   const [cameraError, setCameraError] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
 
@@ -11,22 +11,31 @@ function Camera() {
   const [combo, setCombo] = useState(0);
 
   const motion = useMotionDetection(videoRef, cameraReady);
+useEffect(() => {
+  if (motion < 10) {
+    setCombo((previous) => Math.max(previous - 1, 0));
+    return;
+  }
 
-  useEffect(() => {
-    // Ignoramos el ruido normal de la cámara
-    if (motion < 8) {
-      setCombo((previous) => Math.max(previous - 1, 0));
-      return;
-    }
+  const now = Date.now();
 
-    // El movimiento aumenta el combo
-    setCombo((previous) => Math.min(previous + 1, 20));
+  // Solo permitimos ganar aura cada 120 ms
+  if (now - lastAuraTimeRef.current < 120) {
+    return;
+  }
 
-    // Convertimos movimiento en aura
-    const auraGain = Math.floor(motion * (1 + combo * 0.1));
+  lastAuraTimeRef.current = now;
 
-    setAura((previous) => previous + auraGain);
-  }, [motion]);
+  const baseAura = Math.floor(motion * 0.8);
+
+  const multiplier = 1 + combo * 0.05;
+
+  const auraGain = Math.floor(baseAura * multiplier);
+
+  setAura((previous) => previous + auraGain);
+
+  setCombo((previous) => Math.min(previous + 1, 20));
+}, [motion, combo]);
 
   useEffect(() => {
     let stream;
