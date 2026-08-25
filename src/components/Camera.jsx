@@ -85,163 +85,152 @@ function Camera() {
   // ==========================================
   // DIBUJAR ESQUELETO
   // ==========================================
+useEffect(() => {
+  const canvas = canvasRef.current;
+  const video = videoRef.current;
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
+  if (!canvas || !video || !poseLandmarks) {
+    return;
+  }
 
+  const ctx = canvas.getContext("2d");
+
+  const drawPose = () => {
     if (
-      !canvas ||
-      !video ||
-      !poseLandmarks
+      video.videoWidth === 0 ||
+      video.videoHeight === 0
     ) {
       return;
     }
 
-    const ctx =
-      canvas.getContext("2d");
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
 
-    const drawPose = () => {
-      if (
-        video.videoWidth === 0 ||
-        video.videoHeight === 0
-      ) {
-        return;
-      }
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
 
-      // Ajustar canvas al tamaño real del video
-      canvas.width =
-        video.videoWidth;
+    ctx.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
 
-      canvas.height =
-        video.videoHeight;
+    // ==================================
+    // CONEXIONES DEL CUERPO
+    // ==================================
 
-      ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
+    const connections = [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 7],
 
-      // ==================================
-      // CONEXIONES DEL CUERPO
-      // ==================================
+      [0, 4],
+      [4, 5],
+      [5, 6],
+      [6, 8],
 
-      const connections = [
-        [0, 1],
-        [1, 2],
-        [2, 3],
-        [3, 7],
+      [9, 10],
 
-        [0, 4],
-        [4, 5],
-        [5, 6],
-        [6, 8],
+      [11, 12],
 
-        [9, 10],
+      [11, 13],
+      [13, 15],
 
-        [11, 12],
+      [12, 14],
+      [14, 16],
 
-        [11, 13],
-        [13, 15],
+      [11, 23],
+      [12, 24],
 
-        [12, 14],
-        [14, 16],
+      [23, 24],
 
-        [11, 23],
-        [12, 24],
+      [23, 25],
+      [25, 27],
 
-        [23, 24],
+      [24, 26],
+      [26, 28],
 
-        [23, 25],
-        [25, 27],
+      [27, 29],
+      [29, 31],
 
-        [24, 26],
-        [26, 28],
+      [28, 30],
+      [30, 32],
+    ];
 
-        [27, 29],
-        [29, 31],
+    // ==================================
+    // FUNCIÓN PARA CONVERTIR COORDENADAS
+    // ==================================
 
-        [28, 30],
-        [30, 32],
-      ];
-
-      // ==================================
-      // LÍNEAS
-      // ==================================
-
-      ctx.strokeStyle =
-        "#00ffff";
-
-      ctx.lineWidth = 3;
-
-      connections.forEach(
-        ([start, end]) => {
-          const a =
-            poseLandmarks[start];
-
-          const b =
-            poseLandmarks[end];
-
-          if (!a || !b) return;
-
-          ctx.beginPath();
-
-          ctx.moveTo(
-            a.x * canvas.width,
-            a.y * canvas.height
-          );
-
-          ctx.lineTo(
-            b.x * canvas.width,
-            b.y * canvas.height
-          );
-
-          ctx.stroke();
-        }
-      );
-
-      // ==================================
-      // PUNTOS
-      // ==================================
-
-      poseLandmarks.forEach(
-        (landmark) => {
-          const x =
-            landmark.x *
-            canvas.width;
-
-          const y =
-            landmark.y *
-            canvas.height;
-
-          ctx.beginPath();
-
-          ctx.arc(
-            x,
-            y,
-            5,
-            0,
-            Math.PI * 2
-          );
-
-          ctx.fillStyle =
-            "#ffffff";
-
-          ctx.fill();
-
-          ctx.strokeStyle =
-            "#00ffff";
-
-          ctx.lineWidth = 2;
-
-          ctx.stroke();
-        }
-      );
+    const getPoint = (landmark) => {
+      return {
+        x: landmark.x * videoWidth,
+        y: landmark.y * videoHeight,
+      };
     };
 
-    drawPose();
-  }, [poseLandmarks]);
+    // ==================================
+    // LÍNEAS
+    // ==================================
+
+    ctx.strokeStyle = "#00ffff";
+    ctx.lineWidth = 3;
+
+    connections.forEach(([start, end]) => {
+      const a = poseLandmarks[start];
+      const b = poseLandmarks[end];
+
+      if (!a || !b) return;
+
+      const pointA = getPoint(a);
+      const pointB = getPoint(b);
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        pointA.x,
+        pointA.y
+      );
+
+      ctx.lineTo(
+        pointB.x,
+        pointB.y
+      );
+
+      ctx.stroke();
+    });
+
+    // ==================================
+    // PUNTOS
+    // ==================================
+
+    poseLandmarks.forEach((landmark) => {
+      const point = getPoint(landmark);
+
+      ctx.beginPath();
+
+      ctx.arc(
+        point.x,
+        point.y,
+        5,
+        0,
+        Math.PI * 2
+      );
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+
+      ctx.strokeStyle = "#00ffff";
+      ctx.lineWidth = 2;
+
+      ctx.stroke();
+    });
+  };
+
+  drawPose();
+
+}, [poseLandmarks]);
 
   // ==========================================
   // CÁMARA
