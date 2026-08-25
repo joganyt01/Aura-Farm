@@ -5,9 +5,12 @@ import {
 } from "@mediapipe/tasks-vision";
 
 function usePoseDetection(videoRef, cameraReady) {
-  const [landmarks, setLandmarks] = useState(null);
+  const [poseData, setPoseData] = useState(null);
+
   const poseLandmarkerRef = useRef(null);
   const animationRef = useRef(null);
+
+  const previousLandmarksRef = useRef(null);
 
   useEffect(() => {
     if (!cameraReady) return;
@@ -16,9 +19,10 @@ function usePoseDetection(videoRef, cameraReady) {
 
     const initializePose = async () => {
       try {
-        const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm"
-        );
+        const vision =
+          await FilesetResolver.forVisionTasks(
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm"
+          );
 
         const poseLandmarker =
           await PoseLandmarker.createFromOptions(
@@ -44,9 +48,11 @@ function usePoseDetection(videoRef, cameraReady) {
           return;
         }
 
-        poseLandmarkerRef.current = poseLandmarker;
+        poseLandmarkerRef.current =
+          poseLandmarker;
 
         detectPose();
+
       } catch (error) {
         console.error(
           "Error iniciando Pose Landmarker:",
@@ -55,9 +61,60 @@ function usePoseDetection(videoRef, cameraReady) {
       }
     };
 
+    const calculateDistance = (a, b) => {
+      if (!a || !b) return 0;
+
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+
+      return Math.sqrt(
+        dx * dx + dy * dy
+      );
+    };
+
+    const calculateZoneMovement = (
+      current,
+      previous,
+      indexes
+    ) => {
+      if (!previous) return 0;
+
+      let total = 0;
+      let count = 0;
+
+      indexes.forEach((index) => {
+        const currentPoint =
+          current[index];
+
+        const previousPoint =
+          previous[index];
+
+        if (
+          !currentPoint ||
+          !previousPoint
+        ) {
+          return;
+        }
+
+        total += calculateDistance(
+          currentPoint,
+          previousPoint
+        );
+
+        count++;
+      });
+
+      if (count === 0) return 0;
+
+      return total / count;
+    };
+
     const detectPose = () => {
-      const video = videoRef.current;
-      const landmarker = poseLandmarkerRef.current;
+      const video =
+        videoRef.current;
+
+      const landmarker =
+        poseLandmarkerRef.current;
 
       if (
         !video ||
@@ -65,12 +122,15 @@ function usePoseDetection(videoRef, cameraReady) {
         video.readyState < 2
       ) {
         animationRef.current =
-          requestAnimationFrame(detectPose);
+          requestAnimationFrame(
+            detectPose
+          );
 
         return;
       }
 
-      const timestamp = performance.now();
+      const timestamp =
+        performance.now();
 
       const result =
         landmarker.detectForVideo(
@@ -78,12 +138,119 @@ function usePoseDetection(videoRef, cameraReady) {
           timestamp
         );
 
-      if (result.landmarks?.length > 0) {
-        setLandmarks(result.landmarks[0]);
+      if (
+        result.landmarks &&
+        result.landmarks.length > 0
+      ) {
+        const landmarks =
+          result.landmarks[0];
+
+        const previous =
+          previousLandmarksRef.current;
+
+        // ==================================
+        // MOVIMIENTO POR ZONAS
+        // ==================================
+
+        const headMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+          );
+
+        const leftArmMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [11, 13, 15]
+          );
+
+        const rightArmMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [12, 14, 16]
+          );
+
+        const torsoMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [11, 12, 23, 24]
+          );
+
+        const leftLegMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [23, 25, 27]
+          );
+
+        const rightLegMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [24, 26, 28]
+          );
+
+        // ==================================
+        // MANOS
+        // ==================================
+
+        const leftHandMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [15]
+          );
+
+        const rightHandMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [16]
+          );
+
+        // ==================================
+        // GUARDAR
+        // ==================================
+
+        setPoseData({
+          landmarks,
+
+          head: headMovement,
+
+          leftHand:
+            leftHandMovement,
+
+          rightHand:
+            rightHandMovement,
+
+          leftArm:
+            leftArmMovement,
+
+          rightArm:
+            rightArmMovement,
+
+          torso:
+            torsoMovement,
+
+          leftLeg:
+            leftLegMovement,
+
+          rightLeg:
+            rightLegMovement,
+        });
+
+        previousLandmarksRef.current =
+          landmarks;
       }
 
       animationRef.current =
-        requestAnimationFrame(detectPose);
+        requestAnimationFrame(
+          detectPose
+        );
     };
 
     initializePose();
@@ -92,17 +259,26 @@ function usePoseDetection(videoRef, cameraReady) {
       cancelled = true;
 
       if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+        cancelAnimationFrame(
+          animationRef.current
+        );
       }
 
-      if (poseLandmarkerRef.current) {
+      if (
+        poseLandmarkerRef.current
+      ) {
         poseLandmarkerRef.current.close();
-        poseLandmarkerRef.current = null;
+
+        poseLandmarkerRef.current =
+          null;
       }
+
+      previousLandmarksRef.current =
+        null;
     };
   }, [cameraReady, videoRef]);
 
-  return landmarks;
+  return poseData;
 }
 
 export default usePoseDetection;

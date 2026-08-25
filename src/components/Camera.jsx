@@ -17,10 +17,10 @@ function Camera() {
 
   const motion = useMotionDetection(videoRef, cameraReady);
 
-  const poseLandmarks = usePoseDetection(
-    videoRef,
-    cameraReady
-  );
+  const poseData = usePoseDetection(
+  videoRef,
+  cameraReady
+);
 
   // ==========================================
   // MOVIMIENTO MOSTRADO
@@ -89,7 +89,7 @@ useEffect(() => {
   const canvas = canvasRef.current;
   const video = videoRef.current;
 
-  if (!canvas || !video || !poseLandmarks) {
+  if (!canvas || !video || !poseData?.landmarks) {
     return;
   }
 
@@ -178,9 +178,8 @@ useEffect(() => {
     ctx.lineWidth = 3;
 
     connections.forEach(([start, end]) => {
-      const a = poseLandmarks[start];
-      const b = poseLandmarks[end];
-
+    const a = poseData.landmarks[start];
+    const b = poseData.landmarks[end];
       if (!a || !b) return;
 
       const pointA = getPoint(a);
@@ -205,7 +204,7 @@ useEffect(() => {
     // PUNTOS
     // ==================================
 
-    poseLandmarks.forEach((landmark) => {
+    poseData.landmarks.forEach((landmark) => {
       const point = getPoint(landmark);
 
       ctx.beginPath();
@@ -230,7 +229,7 @@ useEffect(() => {
 
   drawPose();
 
-}, [poseLandmarks]);
+}, [poseData]);
 
   // ==========================================
   // CÁMARA
@@ -399,6 +398,64 @@ useEffect(() => {
         </div>
 
       </div>
+
+      <div className="pose-debug">
+
+  <div>
+    <span>CABEZA</span>
+    <strong>
+      {poseData
+        ? poseData.head.toFixed(3)
+        : "0.000"}
+    </strong>
+  </div>
+
+  <div>
+    <span>MANO IZQ.</span>
+    <strong>
+      {poseData
+        ? poseData.leftHand.toFixed(3)
+        : "0.000"}
+    </strong>
+  </div>
+
+  <div>
+    <span>MANO DER.</span>
+    <strong>
+      {poseData
+        ? poseData.rightHand.toFixed(3)
+        : "0.000"}
+    </strong>
+  </div>
+
+  <div>
+    <span>BRAZO IZQ.</span>
+    <strong>
+      {poseData
+        ? poseData.leftArm.toFixed(3)
+        : "0.000"}
+    </strong>
+  </div>
+
+  <div>
+    <span>BRAZO DER.</span>
+    <strong>
+      {poseData
+        ? poseData.rightArm.toFixed(3)
+        : "0.000"}
+    </strong>
+  </div>
+
+  <div>
+    <span>TORSO</span>
+    <strong>
+      {poseData
+        ? poseData.torso.toFixed(3)
+        : "0.000"}
+    </strong>
+  </div>
+
+</div>
 
       <p className="camera-message">
         🗿 Muévete para generar

@@ -325,3 +325,40 @@ button {
 
   pointer-events: none;
 }
+
+.pose-debug {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 100%;
+  max-width: 500px;
+  margin-top: 8px;
+}
+
+.pose-debug div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 6px;
+
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 8px;
+}
+
+.pose-debug span {
+  font-size: 8px;
+  opacity: 0.5;
+}
+
+.pose-debug strong {
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .pose-debug {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 90vw;
+  }
+}
