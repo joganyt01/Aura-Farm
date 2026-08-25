@@ -17,15 +17,12 @@ function Camera() {
   // ==========================================
   // MOVIMIENTO MOSTRADO
   // ==========================================
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDisplayMotion(motion);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [motion]);
-
+useEffect(() => {
+  setDisplayMotion((previous) => {
+    // Suavizado del movimiento mostrado
+    return Math.round(previous * 0.7 + motion * 0.3);
+  });
+}, [motion]);
   // ==========================================
   // SISTEMA DE AURA
   // ==========================================
@@ -67,9 +64,9 @@ function Camera() {
     setAura((previous) => previous + auraGain);
 
     // El combo sube lentamente
-    setCombo((previous) =>
-      Math.min(previous + 1, 20)
-    );
+   setCombo((previous) =>
+  Math.min(previous + 0.25, 20)
+);
   }, [motion]);
 
   // ==========================================
