@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import useMotionDetection from "../hooks/useMotionDetection";
+import usePoseDetection from "../hooks/usePoseDetection";
 
 function Camera() {
   const videoRef = useRef(null);
@@ -14,15 +15,21 @@ function Camera() {
 
   const motion = useMotionDetection(videoRef, cameraReady);
 
+  const poseLandmarks = usePoseDetection(
+    videoRef,
+    cameraReady
+  );
+
+
   // ==========================================
   // MOVIMIENTO MOSTRADO
   // ==========================================
-useEffect(() => {
-  setDisplayMotion((previous) => {
-    // Suavizado del movimiento mostrado
-    return Math.round(previous * 0.7 + motion * 0.3);
-  });
-}, [motion]);
+  useEffect(() => {
+    setDisplayMotion((previous) => {
+      // Suavizado del movimiento mostrado
+      return Math.round(previous * 0.7 + motion * 0.3);
+    });
+  }, [motion]);
   // ==========================================
   // SISTEMA DE AURA
   // ==========================================
@@ -64,9 +71,9 @@ useEffect(() => {
     setAura((previous) => previous + auraGain);
 
     // El combo sube lentamente
-   setCombo((previous) =>
-  Math.min(previous + 0.25, 20)
-);
+    setCombo((previous) =>
+      Math.min(previous + 0.25, 20)
+    );
   }, [motion]);
 
   // ==========================================
@@ -110,19 +117,19 @@ useEffect(() => {
   // ==========================================
 
   const getMotionState = () => {
-   if (displayMotion < 3) {
-  return "🗿 QUIETO";
-}
+    if (displayMotion < 3) {
+      return "🗿 QUIETO";
+    }
 
-if (displayMotion < 8) {
-  return "👋 MOVIMIENTO";
-}
+    if (displayMotion < 8) {
+      return "👋 MOVIMIENTO";
+    }
 
-if (displayMotion < 15) {
-  return "🔥 MOVIMIENTO FUERTE";
-}
+    if (displayMotion < 15) {
+      return "🔥 MOVIMIENTO FUERTE";
+    }
 
-return "⚡ MOVIMIENTO EXTREMO";
+    return "⚡ MOVIMIENTO EXTREMO";
   };
 
   // ==========================================
@@ -162,6 +169,21 @@ return "⚡ MOVIMIENTO EXTREMO";
           />
         )}
 
+      </div>
+
+      <div className="pose-debug">
+        <strong>
+          {poseLandmarks
+            ? "🧠 CUERPO DETECTADO"
+            : "🔎 BUSCANDO CUERPO..."}
+        </strong>
+
+        <span>
+          Puntos detectados:{" "}
+          {poseLandmarks
+            ? poseLandmarks.length
+            : 0}
+        </span>
       </div>
 
       {/* PANEL DE CALIBRACIÓN */}
