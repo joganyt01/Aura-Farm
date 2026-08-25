@@ -110,19 +110,19 @@ useEffect(() => {
   // ==========================================
 
   const getMotionState = () => {
-    if (displayMotion < 10) {
-      return "🗿 QUIETO";
-    }
+   if (displayMotion < 3) {
+  return "🗿 QUIETO";
+}
 
-    if (displayMotion < 30) {
-      return "👋 MOVIMIENTO";
-    }
+if (displayMotion < 8) {
+  return "👋 MOVIMIENTO";
+}
 
-    if (displayMotion < 60) {
-      return "🔥 MOVIMIENTO FUERTE";
-    }
+if (displayMotion < 15) {
+  return "🔥 MOVIMIENTO FUERTE";
+}
 
-    return "⚡ MOVIMIENTO EXTREMO";
+return "⚡ MOVIMIENTO EXTREMO";
   };
 
   // ==========================================
