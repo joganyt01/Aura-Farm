@@ -356,6 +356,31 @@ button {
   font-size: 12px;
 }
 
+.camera-container {
+  position: relative;
+}
+
+.camera-container video {
+  position: relative;
+  z-index: 1;
+}
+
+.pose-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.aura-effects {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+}
+
 @media (max-width: 480px) {
   .pose-debug {
     grid-template-columns: repeat(2, 1fr);
