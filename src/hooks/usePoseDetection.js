@@ -17,6 +17,67 @@ function usePoseDetection(videoRef, cameraReady) {
 
     let cancelled = false;
 
+    const calculateDistance = (a, b) => {
+      if (!a || !b) return 0;
+
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+
+      return Math.sqrt(
+        dx * dx + dy * dy
+      );
+    };
+
+    const calculateZoneMovement = (
+      current,
+      previous,
+      indexes
+    ) => {
+      if (!previous) return 0;
+
+      let total = 0;
+      let count = 0;
+
+      indexes.forEach((index) => {
+        const currentPoint =
+          current[index];
+
+        const previousPoint =
+          previous[index];
+
+        if (
+          !currentPoint ||
+          !previousPoint
+        ) {
+          return;
+        }
+
+        const distance =
+          calculateDistance(
+            currentPoint,
+            previousPoint
+          );
+
+        total += distance;
+        count++;
+      });
+
+      if (count === 0) return 0;
+
+      const movement =
+        total / count;
+
+      // ==================================
+      // FILTRO DE RUIDO
+      // ==================================
+
+      if (movement < 0.008) {
+        return 0;
+      }
+
+      return movement;
+    };
+
     const initializePose = async () => {
       try {
         const vision =
@@ -61,54 +122,6 @@ function usePoseDetection(videoRef, cameraReady) {
       }
     };
 
-    const calculateDistance = (a, b) => {
-      if (!a || !b) return 0;
-
-      const dx = a.x - b.x;
-      const dy = a.y - b.y;
-
-      return Math.sqrt(
-        dx * dx + dy * dy
-      );
-    };
-
-    const calculateZoneMovement = (
-      current,
-      previous,
-      indexes
-    ) => {
-      if (!previous) return 0;
-
-      let total = 0;
-      let count = 0;
-
-      indexes.forEach((index) => {
-        const currentPoint =
-          current[index];
-
-        const previousPoint =
-          previous[index];
-
-        if (
-          !currentPoint ||
-          !previousPoint
-        ) {
-          return;
-        }
-
-        total += calculateDistance(
-          currentPoint,
-          previousPoint
-        );
-
-        count++;
-      });
-
-      if (count === 0) return 0;
-
-      return total / count;
-    };
-
     const detectPose = () => {
       const video =
         videoRef.current;
@@ -149,49 +162,26 @@ function usePoseDetection(videoRef, cameraReady) {
           previousLandmarksRef.current;
 
         // ==================================
-        // MOVIMIENTO POR ZONAS
+        // CABEZA
         // ==================================
 
         const headMovement =
           calculateZoneMovement(
             landmarks,
             previous,
-            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-          );
-
-        const leftArmMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [11, 13, 15]
-          );
-
-        const rightArmMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [12, 14, 16]
-          );
-
-        const torsoMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [11, 12, 23, 24]
-          );
-
-        const leftLegMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [23, 25, 27]
-          );
-
-        const rightLegMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [24, 26, 28]
+            [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+            ]
           );
 
         // ==================================
@@ -213,13 +203,61 @@ function usePoseDetection(videoRef, cameraReady) {
           );
 
         // ==================================
-        // GUARDAR
+        // BRAZOS
+        // ==================================
+
+        const leftArmMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [11, 13, 15]
+          );
+
+        const rightArmMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [12, 14, 16]
+          );
+
+        // ==================================
+        // TORSO
+        // ==================================
+
+        const torsoMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [11, 12, 23, 24]
+          );
+
+        // ==================================
+        // PIERNAS
+        // ==================================
+
+        const leftLegMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [23, 25, 27]
+          );
+
+        const rightLegMovement =
+          calculateZoneMovement(
+            landmarks,
+            previous,
+            [24, 26, 28]
+          );
+
+        // ==================================
+        // GUARDAR DATOS
         // ==================================
 
         setPoseData({
           landmarks,
 
-          head: headMovement,
+          head:
+            headMovement,
 
           leftHand:
             leftHandMovement,
