@@ -13,24 +13,149 @@ function AuraEffects({ poseData, motion }) {
 
     const ctx = canvas.getContext("2d");
 
+    const drawLightning = (
+      ctx,
+      point,
+      power,
+      direction = 1
+    ) => {
+      // =====================================
+      // DISTANCIA DEL RAYO RESPECTO A LA MANO
+      // =====================================
+
+      const offset = 15 + power * 15;
+
+      const startX =
+        point.x + direction * offset;
+
+      const startY =
+        point.y - offset * 0.35;
+
+      // =====================================
+      // LONGITUD
+      // =====================================
+
+      const length =
+        35 + power * 90;
+
+      // =====================================
+      // DIRECCIÓN
+      // =====================================
+
+      const angle =
+        -Math.PI / 2 +
+        direction * 0.35 +
+        (Math.random() - 0.5) * 0.25;
+
+      const endX =
+        startX +
+        Math.cos(angle) * length;
+
+      const endY =
+        startY +
+        Math.sin(angle) * length;
+
+      // =====================================
+      // RAYO
+      // =====================================
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        startX,
+        startY
+      );
+
+      let currentX =
+        startX;
+
+      let currentY =
+        startY;
+
+      const segments = 6;
+
+      for (
+        let i = 0;
+        i < segments;
+        i++
+      ) {
+        const progress =
+          (i + 1) / segments;
+
+        const targetX =
+          startX +
+          (endX - startX) *
+            progress;
+
+        const targetY =
+          startY +
+          (endY - startY) *
+            progress;
+
+        currentX =
+          targetX +
+          (Math.random() - 0.5) *
+            25;
+
+        currentY =
+          targetY +
+          (Math.random() - 0.5) *
+            10;
+
+        ctx.lineTo(
+          currentX,
+          currentY
+        );
+      }
+
+      // =====================================
+      // ESTILO
+      // =====================================
+
+      ctx.strokeStyle =
+        "#ffffff";
+
+      ctx.lineWidth =
+        2 + power * 3;
+
+      ctx.shadowBlur =
+        20;
+
+      ctx.shadowColor =
+        "#00ffff";
+
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+    };
+
     const draw = () => {
-      const video = canvas.parentElement?.querySelector("video");
+      const video =
+        canvas.parentElement?.querySelector(
+          "video"
+        );
 
       if (!video) {
         requestAnimationFrame(draw);
         return;
       }
 
-      const width = video.videoWidth;
-      const height = video.videoHeight;
+      const width =
+        video.videoWidth;
+
+      const height =
+        video.videoHeight;
 
       if (!width || !height) {
         requestAnimationFrame(draw);
         return;
       }
 
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width =
+        width;
+
+      canvas.height =
+        height;
 
       ctx.clearRect(
         0,
@@ -52,18 +177,6 @@ function AuraEffects({ poseData, motion }) {
       const rightHand =
         landmarks[16];
 
-      const leftWrist =
-        landmarks[15];
-
-      const rightWrist =
-        landmarks[16];
-
-      const leftShoulder =
-        landmarks[11];
-
-      const rightShoulder =
-        landmarks[12];
-
       const nose =
         landmarks[0];
 
@@ -77,8 +190,11 @@ function AuraEffects({ poseData, motion }) {
       }
 
       const getPoint = (point) => ({
-        x: point.x * width,
-        y: point.y * height,
+        x:
+          point.x * width,
+
+        y:
+          point.y * height,
       });
 
       // =====================================
@@ -86,7 +202,10 @@ function AuraEffects({ poseData, motion }) {
       // =====================================
 
       const auraPower =
-        Math.min(motion / 20, 1);
+        Math.min(
+          motion / 20,
+          1
+        );
 
       // =====================================
       // PARTÍCULAS
@@ -111,9 +230,25 @@ function AuraEffects({ poseData, motion }) {
           const point =
             getPoint(source);
 
+          // Las partículas tampoco nacen
+          // exactamente sobre la mano
+
+          const offsetX =
+            (Math.random() - 0.5) *
+            25;
+
+          const offsetY =
+            (Math.random() - 0.5) *
+            25;
+
           particlesRef.current.push({
-            x: point.x,
-            y: point.y,
+            x:
+              point.x +
+              offsetX,
+
+            y:
+              point.y +
+              offsetY,
 
             vx:
               (Math.random() - 0.5) *
@@ -126,7 +261,8 @@ function AuraEffects({ poseData, motion }) {
             life: 1,
 
             size:
-              Math.random() * 4 + 2,
+              Math.random() * 4 +
+              2,
           });
         }
       }
@@ -144,7 +280,8 @@ function AuraEffects({ poseData, motion }) {
             particle.y +=
               particle.vy;
 
-            particle.life -= 0.025;
+            particle.life -=
+              0.025;
 
             if (
               particle.life <= 0
@@ -168,14 +305,16 @@ function AuraEffects({ poseData, motion }) {
             ctx.fillStyle =
               "#ffffff";
 
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur =
+              15;
 
             ctx.shadowColor =
               "#00ffff";
 
             ctx.fill();
 
-            ctx.shadowBlur = 0;
+            ctx.shadowBlur =
+              0;
 
             return true;
           }
@@ -184,7 +323,7 @@ function AuraEffects({ poseData, motion }) {
       ctx.globalAlpha = 1;
 
       // =====================================
-      // AURA ALREDEDOR DE LA CABEZA
+      // AURA DE LA CABEZA
       // =====================================
 
       if (motion > 3) {
@@ -206,97 +345,46 @@ function AuraEffects({ poseData, motion }) {
         );
 
         ctx.strokeStyle =
-          `rgba(0,255,255,${0.2 + auraPower * 0.5})`;
+          `rgba(0,255,255,${
+            0.2 +
+            auraPower * 0.5
+          })`;
 
         ctx.lineWidth = 3;
 
-        ctx.shadowBlur = 25;
+        ctx.shadowBlur =
+          25;
 
         ctx.shadowColor =
           "#00ffff";
 
         ctx.stroke();
 
-        ctx.shadowBlur = 0;
+        ctx.shadowBlur =
+          0;
       }
 
       // =====================================
-      // RAYOS DE LAS MANOS
+      // RAYOS
       // =====================================
 
       if (motion > 5) {
         drawLightning(
           ctx,
           getPoint(leftHand),
-          auraPower
+          auraPower,
+          -1
         );
 
         drawLightning(
           ctx,
           getPoint(rightHand),
-          auraPower
+          auraPower,
+          1
         );
       }
 
       requestAnimationFrame(draw);
-    };
-
-    const drawLightning = (
-      ctx,
-      point,
-      power
-    ) => {
-      const length =
-        30 +
-        power * 80;
-
-      ctx.beginPath();
-
-      ctx.moveTo(
-        point.x,
-        point.y
-      );
-
-      let currentX =
-        point.x;
-
-      let currentY =
-        point.y;
-
-      const segments = 5;
-
-      for (
-        let i = 0;
-        i < segments;
-        i++
-      ) {
-        currentX +=
-          (Math.random() - 0.5) *
-          30;
-
-        currentY -=
-          length / segments;
-
-        ctx.lineTo(
-          currentX,
-          currentY
-        );
-      }
-
-      ctx.strokeStyle =
-        "#ffffff";
-
-      ctx.lineWidth =
-        2 + power * 3;
-
-      ctx.shadowBlur = 20;
-
-      ctx.shadowColor =
-        "#00ffff";
-
-      ctx.stroke();
-
-      ctx.shadowBlur = 0;
     };
 
     draw();
@@ -309,7 +397,6 @@ function AuraEffects({ poseData, motion }) {
         canvas.height
       );
     };
-
   }, [poseData, motion]);
 
   return (

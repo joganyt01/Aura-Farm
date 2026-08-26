@@ -23,6 +23,8 @@ function Camera() {
     cameraReady
   );
 
+  console.log("POSE DATA:", poseData);
+
   // ==========================================
   // MOVIMIENTO MOSTRADO
   // ==========================================
