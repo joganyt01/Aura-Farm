@@ -89,7 +89,7 @@ useEffect(() => {
   const canvas = canvasRef.current;
   const video = videoRef.current;
 
-  if (!canvas || !video || !poseData?.landmarks) {
+  if (!canvas || !video || !poseData?.smoothedLandmarks) {
     return;
   }
 
@@ -178,8 +178,8 @@ useEffect(() => {
     ctx.lineWidth = 3;
 
     connections.forEach(([start, end]) => {
-    const a = poseData.landmarks[start];
-    const b = poseData.landmarks[end];
+    const a = poseData.smoothedLandmarks[start];
+    const b = poseData.smoothedLandmarks[end];
       if (!a || !b) return;
 
       const pointA = getPoint(a);
@@ -204,7 +204,7 @@ useEffect(() => {
     // PUNTOS
     // ==================================
 
-    poseData.landmarks.forEach((landmark) => {
+    poseData.smoothedLandmarks.forEach((landmark) => {
       const point = getPoint(landmark);
 
       ctx.beginPath();

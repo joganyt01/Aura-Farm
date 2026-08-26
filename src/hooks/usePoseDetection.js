@@ -1,322 +1,367 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  FilesetResolver,
-  PoseLandmarker,
+    FilesetResolver,
+    PoseLandmarker,
 } from "@mediapipe/tasks-vision";
 
 function usePoseDetection(videoRef, cameraReady) {
-  const [poseData, setPoseData] = useState(null);
+    const [poseData, setPoseData] = useState(null);
 
-  const poseLandmarkerRef = useRef(null);
-  const animationRef = useRef(null);
+    const poseLandmarkerRef = useRef(null);
+    const animationRef = useRef(null);
 
-  const previousLandmarksRef = useRef(null);
+    const previousLandmarksRef = useRef(null);
+    const smoothedLandmarksRef = useRef(null);
 
-  useEffect(() => {
-    if (!cameraReady) return;
+    useEffect(() => {
+        if (!cameraReady) return;
 
-    let cancelled = false;
+        let cancelled = false;
 
-    const calculateDistance = (a, b) => {
-      if (!a || !b) return 0;
+        const calculateDistance = (a, b) => {
+            if (!a || !b) return 0;
 
-      const dx = a.x - b.x;
-      const dy = a.y - b.y;
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
 
-      return Math.sqrt(
-        dx * dx + dy * dy
-      );
-    };
+            return Math.sqrt(
+                dx * dx + dy * dy
+            );
+        };
 
-    const calculateZoneMovement = (
-      current,
-      previous,
-      indexes
-    ) => {
-      if (!previous) return 0;
+      const calculateZoneMovement = (
+  current,
+  previous,
+  indexes
+) => {
+  if (!previous) return 0;
 
-      let total = 0;
-      let count = 0;
+  let total = 0;
+  let count = 0;
 
-      indexes.forEach((index) => {
-        const currentPoint =
-          current[index];
+  indexes.forEach((index) => {
+    const currentPoint = current[index];
+    const previousPoint = previous[index];
 
-        const previousPoint =
-          previous[index];
+    if (!currentPoint || !previousPoint) {
+      return;
+    }
 
-        if (
-          !currentPoint ||
-          !previousPoint
-        ) {
-          return;
-        }
+    // Ignorar puntos con poca confianza
+    if (
+      currentPoint.visibility !== undefined &&
+      currentPoint.visibility < 0.5
+    ) {
+      return;
+    }
 
-        const distance =
-          calculateDistance(
-            currentPoint,
-            previousPoint
-          );
+    const dx =
+      currentPoint.x - previousPoint.x;
 
-        total += distance;
-        count++;
-      });
+    const dy =
+      currentPoint.y - previousPoint.y;
 
-      if (count === 0) return 0;
+    const distance = Math.sqrt(
+      dx * dx + dy * dy
+    );
 
-      const movement =
-        total / count;
+    total += distance;
+    count++;
+  });
 
-      // ==================================
-      // FILTRO DE RUIDO
-      // ==================================
+  if (count === 0) return 0;
 
-      if (movement < 0.008) {
-        return 0;
-      }
+  const movement = total / count;
 
-      return movement;
-    };
+  // FILTRO DE MICRO-MOVIMIENTOS
+  if (movement < 0.015) {
+    return 0;
+  }
 
-    const initializePose = async () => {
-      try {
-        const vision =
-          await FilesetResolver.forVisionTasks(
-            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm"
-          );
+  return movement;
+};
 
-        const poseLandmarker =
-          await PoseLandmarker.createFromOptions(
-            vision,
-            {
-              baseOptions: {
-                modelAssetPath:
-                  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-              },
+        const initializePose = async () => {
+            try {
+                const vision =
+                    await FilesetResolver.forVisionTasks(
+                        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm"
+                    );
 
-              runningMode: "VIDEO",
+                const poseLandmarker =
+                    await PoseLandmarker.createFromOptions(
+                        vision,
+                        {
+                            baseOptions: {
+                                modelAssetPath:
+                                    "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+                            },
 
-              numPoses: 1,
+                            runningMode: "VIDEO",
 
-              minPoseDetectionConfidence: 0.5,
-              minPosePresenceConfidence: 0.5,
-              minTrackingConfidence: 0.5,
+                            numPoses: 1,
+
+                            minPoseDetectionConfidence: 0.5,
+                            minPosePresenceConfidence: 0.5,
+                            minTrackingConfidence: 0.5,
+                        }
+                    );
+
+                if (cancelled) {
+                    poseLandmarker.close();
+                    return;
+                }
+
+                poseLandmarkerRef.current =
+                    poseLandmarker;
+
+                detectPose();
+
+            } catch (error) {
+                console.error(
+                    "Error iniciando Pose Landmarker:",
+                    error
+                );
             }
-          );
+        };
 
-        if (cancelled) {
-          poseLandmarker.close();
-          return;
-        }
+        const detectPose = () => {
+            const video =
+                videoRef.current;
 
-        poseLandmarkerRef.current =
-          poseLandmarker;
+            const landmarker =
+                poseLandmarkerRef.current;
 
-        detectPose();
+            if (
+                !video ||
+                !landmarker ||
+                video.readyState < 2
+            ) {
+                animationRef.current =
+                    requestAnimationFrame(
+                        detectPose
+                    );
 
-      } catch (error) {
-        console.error(
-          "Error iniciando Pose Landmarker:",
-          error
-        );
-      }
-    };
+                return;
+            }
 
-    const detectPose = () => {
-      const video =
-        videoRef.current;
+            const timestamp =
+                performance.now();
 
-      const landmarker =
-        poseLandmarkerRef.current;
+            const result =
+                landmarker.detectForVideo(
+                    video,
+                    timestamp
+                );
 
-      if (
-        !video ||
-        !landmarker ||
-        video.readyState < 2
-      ) {
-        animationRef.current =
-          requestAnimationFrame(
-            detectPose
-          );
+            if (
+                result.landmarks &&
+                result.landmarks.length > 0
+            ) {
+                const landmarks =
+                    result.landmarks[0];
 
-        return;
-      }
+                // ==================================
+// SUAVIZADO DE LANDMARKS
+// ==================================
 
-      const timestamp =
-        performance.now();
+let smoothedLandmarks =
+  smoothedLandmarksRef.current;
 
-      const result =
-        landmarker.detectForVideo(
-          video,
-          timestamp
-        );
+if (!smoothedLandmarks) {
+  smoothedLandmarks =
+    landmarks.map((point) => ({
+      ...point,
+    }));
 
-      if (
-        result.landmarks &&
-        result.landmarks.length > 0
-      ) {
-        const landmarks =
-          result.landmarks[0];
+  smoothedLandmarksRef.current =
+    smoothedLandmarks;
+} else {
+  smoothedLandmarks =
+    landmarks.map((point, index) => {
+      const previous =
+        smoothedLandmarks[index];
 
-        const previous =
-          previousLandmarksRef.current;
+      const smoothing = 0.25;
 
-        // ==================================
-        // CABEZA
-        // ==================================
+      return {
+        ...point,
 
-        const headMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [
-              0,
-              1,
-              2,
-              3,
-              4,
-              5,
-              6,
-              7,
-              8,
-              9,
-              10,
-            ]
-          );
+        x:
+          previous.x +
+          (point.x - previous.x) *
+            smoothing,
 
-        // ==================================
-        // MANOS
-        // ==================================
+        y:
+          previous.y +
+          (point.y - previous.y) *
+            smoothing,
+      };
+    });
 
-        const leftHandMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [15]
-          );
+  smoothedLandmarksRef.current =
+    smoothedLandmarks;
+}
 
-        const rightHandMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [16]
-          );
+                const previous =
+                    previousLandmarksRef.current;
 
-        // ==================================
-        // BRAZOS
-        // ==================================
+                // ==================================
+                // CABEZA
+                // ==================================
 
-        const leftArmMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [11, 13, 15]
-          );
+                const headMovement =
+                    calculateZoneMovement(
+                        smoothedLandmarks,
+                        previous,
+                        [
+                            0,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            7,
+                            8,
+                            9,
+                            10,
+                        ]
+                    );
 
-        const rightArmMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [12, 14, 16]
-          );
+                // ==================================
+                // MANOS
+                // ==================================
 
-        // ==================================
-        // TORSO
-        // ==================================
+                const leftHandMovement =
+                    calculateZoneMovement(
+                        smoothedLandmarks,
+                        previous,
+                        [15]
+                    );
 
-        const torsoMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [11, 12, 23, 24]
-          );
+                const rightHandMovement =
+                    calculateZoneMovement(
+                        smoothedLandmarks,
+                        previous,
+                        [16]
+                    );
 
-        // ==================================
-        // PIERNAS
-        // ==================================
+                // ==================================
+                // BRAZOS
+                // ==================================
 
-        const leftLegMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [23, 25, 27]
-          );
+                const leftArmMovement =
+                    calculateZoneMovement(
+                        smoothedLandmarks,
+                        previous,
+                        [11, 13, 15]
+                    );
 
-        const rightLegMovement =
-          calculateZoneMovement(
-            landmarks,
-            previous,
-            [24, 26, 28]
-          );
+                const rightArmMovement =
+                    calculateZoneMovement(
+                        smoothedLandmarks,
+                        previous,
+                        [12, 14, 16]
+                    );
 
-        // ==================================
-        // GUARDAR DATOS
-        // ==================================
+                // ==================================
+                // TORSO
+                // ==================================
 
-        setPoseData({
-          landmarks,
+                const torsoMovement =
+                    calculateZoneMovement(
+                        smoothedLandmarks,
+                        previous,
+                        [11, 12, 23, 24]
+                    );
 
-          head:
-            headMovement,
+                // ==================================
+                // PIERNAS
+                // ==================================
 
-          leftHand:
-            leftHandMovement,
+                const leftLegMovement =
+                    calculateZoneMovement(
+                        smoothedLandmarks,
+                        previous,
+                        [23, 25, 27]
+                    );
 
-          rightHand:
-            rightHandMovement,
+                const rightLegMovement =
+                    calculateZoneMovement(
+                        smoothedLandmarks,
+                        previous,
+                        [24, 26, 28]
+                    );
 
-          leftArm:
-            leftArmMovement,
+                // ==================================
+                // GUARDAR DATOS
+                // ==================================
 
-          rightArm:
-            rightArmMovement,
+                setPoseData({
+                    smoothedLandmarks,
 
-          torso:
-            torsoMovement,
+                    head:
+                        headMovement,
 
-          leftLeg:
-            leftLegMovement,
+                    leftHand:
+                        leftHandMovement,
 
-          rightLeg:
-            rightLegMovement,
-        });
+                    rightHand:
+                        rightHandMovement,
 
-        previousLandmarksRef.current =
-          landmarks;
-      }
+                    leftArm:
+                        leftArmMovement,
 
-      animationRef.current =
-        requestAnimationFrame(
-          detectPose
-        );
-    };
+                    rightArm:
+                        rightArmMovement,
 
-    initializePose();
+                    torso:
+                        torsoMovement,
 
-    return () => {
-      cancelled = true;
+                    leftLeg:
+                        leftLegMovement,
 
-      if (animationRef.current) {
-        cancelAnimationFrame(
-          animationRef.current
-        );
-      }
+                    rightLeg:
+                        rightLegMovement,
+                });
 
-      if (
-        poseLandmarkerRef.current
-      ) {
-        poseLandmarkerRef.current.close();
+               previousLandmarksRef.current =
+  smoothedLandmarks;
+            }
 
-        poseLandmarkerRef.current =
-          null;
-      }
+            animationRef.current =
+                requestAnimationFrame(
+                    detectPose
+                );
+        };
 
-      previousLandmarksRef.current =
-        null;
-    };
-  }, [cameraReady, videoRef]);
+        initializePose();
 
-  return poseData;
+        return () => {
+            cancelled = true;
+
+            if (animationRef.current) {
+                cancelAnimationFrame(
+                    animationRef.current
+                );
+            }
+
+            if (
+                poseLandmarkerRef.current
+            ) {
+                poseLandmarkerRef.current.close();
+
+                poseLandmarkerRef.current =
+                    null;
+            }
+
+            previousLandmarksRef.current =
+                null;
+        };
+    }, [cameraReady, videoRef]);
+
+    return poseData;
 }
 
 export default usePoseDetection;
