@@ -3,7 +3,14 @@ import useMotionDetection from "../hooks/useMotionDetection";
 import usePoseDetection from "../hooks/usePoseDetection";
 import AuraEffects from "./AuraEffects";
 
-function Camera() {
+function Camera({
+  gameState,
+  pose,
+  poseNumber,
+  totalPoses,
+  timeLeft,
+  onPoseComplete,
+}) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -34,122 +41,122 @@ function Camera() {
       );
     });
   }, [motion]);
-// ==========================================
-// SISTEMA DE AURA CORPORAL
-// ==========================================
+  // ==========================================
+  // SISTEMA DE AURA CORPORAL
+  // ==========================================
 
-useEffect(() => {
-  if (!poseData) {
-    return;
-  }
+  useEffect(() => {
+    if (!poseData) {
+      return;
+    }
 
-  const now = Date.now();
+    const now = Date.now();
 
-  if (
-    now - lastAuraTimeRef.current < 200
-  ) {
-    return;
-  }
+    if (
+      now - lastAuraTimeRef.current < 200
+    ) {
+      return;
+    }
 
-  // ========================================
-  // MOVIMIENTO DE CADA ZONA
-  // ========================================
+    // ========================================
+    // MOVIMIENTO DE CADA ZONA
+    // ========================================
 
-  const head =
-    poseData.head || 0;
+    const head =
+      poseData.head || 0;
 
-  const leftHand =
-    poseData.leftHand || 0;
+    const leftHand =
+      poseData.leftHand || 0;
 
-  const rightHand =
-    poseData.rightHand || 0;
+    const rightHand =
+      poseData.rightHand || 0;
 
-  const leftArm =
-    poseData.leftArm || 0;
+    const leftArm =
+      poseData.leftArm || 0;
 
-  const rightArm =
-    poseData.rightArm || 0;
+    const rightArm =
+      poseData.rightArm || 0;
 
-  const torso =
-    poseData.torso || 0;
+    const torso =
+      poseData.torso || 0;
 
-  const leftLeg =
-    poseData.leftLeg || 0;
+    const leftLeg =
+      poseData.leftLeg || 0;
 
-  const rightLeg =
-    poseData.rightLeg || 0;
+    const rightLeg =
+      poseData.rightLeg || 0;
 
-  // ========================================
-  // POTENCIA CORPORAL
-  // ========================================
+    // ========================================
+    // POTENCIA CORPORAL
+    // ========================================
 
-  const bodyPower =
-    head * 1 +
-    leftHand * 2 +
-    rightHand * 2 +
-    leftArm * 3 +
-    rightArm * 3 +
-    torso * 2 +
-    leftLeg * 2 +
-    rightLeg * 2;
+    const bodyPower =
+      head * 1 +
+      leftHand * 2 +
+      rightHand * 2 +
+      leftArm * 3 +
+      rightArm * 3 +
+      torso * 2 +
+      leftLeg * 2 +
+      rightLeg * 2;
 
-  // ========================================
-  // COMBINAR CON MOVIMIENTO DE CÁMARA
-  // ========================================
+    // ========================================
+    // COMBINAR CON MOVIMIENTO DE CÁMARA
+    // ========================================
 
-  const cameraPower =
-    motion * 0.15;
+    const cameraPower =
+      motion * 0.15;
 
-  const totalPower =
-    bodyPower * 100 +
-    cameraPower;
+    const totalPower =
+      bodyPower * 100 +
+      cameraPower;
 
-  // ========================================
-  // FILTRO
-  // ========================================
+    // ========================================
+    // FILTRO
+    // ========================================
 
-  if (totalPower < 3) {
-    return;
-  }
+    if (totalPower < 3) {
+      return;
+    }
 
-  lastAuraTimeRef.current = now;
+    lastAuraTimeRef.current = now;
 
-  // ========================================
-  // MULTIPLICADOR DE COMBO
-  // ========================================
+    // ========================================
+    // MULTIPLICADOR DE COMBO
+    // ========================================
 
-  const multiplier =
-    1 + combo * 0.03;
+    const multiplier =
+      1 + combo * 0.03;
 
-  // ========================================
-  // AURA GENERADA
-  // ========================================
+    // ========================================
+    // AURA GENERADA
+    // ========================================
 
-  const auraGain = Math.max(
-    1,
-    Math.floor(
-      totalPower * 0.2 * multiplier
-    )
-  );
-
-  setAura(
-    (previous) =>
-      previous + auraGain
-  );
-
-  // ========================================
-  // COMBO
-  // ========================================
-
-  setCombo(
-    (previous) =>
-      Math.min(
-        previous + 0.25,
-        20
+    const auraGain = Math.max(
+      1,
+      Math.floor(
+        totalPower * 0.2 * multiplier
       )
-  );
+    );
 
-}, [poseData, motion, combo]);
+    setAura(
+      (previous) =>
+        previous + auraGain
+    );
+
+    // ========================================
+    // COMBO
+    // ========================================
+
+    setCombo(
+      (previous) =>
+        Math.min(
+          previous + 0.25,
+          20
+        )
+    );
+
+  }, [poseData, motion, combo]);
   // ==========================================
   // DIBUJAR ESQUELETO
   // ==========================================
@@ -415,6 +422,26 @@ useEffect(() => {
 
               {/* AURA */}
 
+              <div className="hud-challenge">
+                <span>
+                  POSE {poseNumber} / {totalPoses}
+                </span>
+
+                <strong>
+                  {pose?.emoji} {pose?.name}
+                </strong>
+
+                <small>
+                  {gameState === "countdown"
+                    ? "PREPÁRATE"
+                    : "¡HAZ LA POSE!"}
+                </small>
+              </div>
+
+              <div className="hud-timer">
+                {timeLeft}s
+              </div>
+
               <div className="hud-aura">
                 <span>AURA</span>
 
@@ -454,6 +481,15 @@ useEffect(() => {
               </div>
 
             </div>
+
+            {gameState === "playing" && (
+              <button
+                className="debug-pose-button"
+                onClick={onPoseComplete}
+              >
+                ✅ SIMULAR POSE
+              </button>
+            )}
 
           </>
         )}
