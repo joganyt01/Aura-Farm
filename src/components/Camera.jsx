@@ -34,54 +34,122 @@ function Camera() {
       );
     });
   }, [motion]);
+// ==========================================
+// SISTEMA DE AURA CORPORAL
+// ==========================================
 
-  // ==========================================
-  // SISTEMA DE AURA
-  // ==========================================
+useEffect(() => {
+  if (!poseData) {
+    return;
+  }
 
-  useEffect(() => {
-    if (motion < 10) {
-      return;
-    }
+  const now = Date.now();
 
-    const now = Date.now();
+  if (
+    now - lastAuraTimeRef.current < 200
+  ) {
+    return;
+  }
 
-    if (
-      now - lastAuraTimeRef.current < 200
-    ) {
-      return;
-    }
+  // ========================================
+  // MOVIMIENTO DE CADA ZONA
+  // ========================================
 
-    lastAuraTimeRef.current = now;
+  const head =
+    poseData.head || 0;
 
-    const baseAura = Math.floor(
-      motion * 0.2
-    );
+  const leftHand =
+    poseData.leftHand || 0;
 
-    const multiplier =
-      1 + combo * 0.03;
+  const rightHand =
+    poseData.rightHand || 0;
 
-    const auraGain = Math.max(
-      1,
-      Math.floor(
-        baseAura * multiplier
+  const leftArm =
+    poseData.leftArm || 0;
+
+  const rightArm =
+    poseData.rightArm || 0;
+
+  const torso =
+    poseData.torso || 0;
+
+  const leftLeg =
+    poseData.leftLeg || 0;
+
+  const rightLeg =
+    poseData.rightLeg || 0;
+
+  // ========================================
+  // POTENCIA CORPORAL
+  // ========================================
+
+  const bodyPower =
+    head * 1 +
+    leftHand * 2 +
+    rightHand * 2 +
+    leftArm * 3 +
+    rightArm * 3 +
+    torso * 2 +
+    leftLeg * 2 +
+    rightLeg * 2;
+
+  // ========================================
+  // COMBINAR CON MOVIMIENTO DE CÁMARA
+  // ========================================
+
+  const cameraPower =
+    motion * 0.15;
+
+  const totalPower =
+    bodyPower * 100 +
+    cameraPower;
+
+  // ========================================
+  // FILTRO
+  // ========================================
+
+  if (totalPower < 3) {
+    return;
+  }
+
+  lastAuraTimeRef.current = now;
+
+  // ========================================
+  // MULTIPLICADOR DE COMBO
+  // ========================================
+
+  const multiplier =
+    1 + combo * 0.03;
+
+  // ========================================
+  // AURA GENERADA
+  // ========================================
+
+  const auraGain = Math.max(
+    1,
+    Math.floor(
+      totalPower * 0.2 * multiplier
+    )
+  );
+
+  setAura(
+    (previous) =>
+      previous + auraGain
+  );
+
+  // ========================================
+  // COMBO
+  // ========================================
+
+  setCombo(
+    (previous) =>
+      Math.min(
+        previous + 0.25,
+        20
       )
-    );
+  );
 
-    setAura(
-      (previous) =>
-        previous + auraGain
-    );
-
-    setCombo(
-      (previous) =>
-        Math.min(
-          previous + 0.25,
-          20
-        )
-    );
-  }, [motion, combo]);
-
+}, [poseData, motion, combo]);
   // ==========================================
   // DIBUJAR ESQUELETO
   // ==========================================
