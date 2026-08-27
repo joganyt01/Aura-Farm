@@ -23,8 +23,6 @@ function Camera() {
     cameraReady
   );
 
-  console.log("POSE DATA:", poseData);
-
   // ==========================================
   // MOVIMIENTO MOSTRADO
   // ==========================================
@@ -49,8 +47,7 @@ function Camera() {
     const now = Date.now();
 
     if (
-      now - lastAuraTimeRef.current <
-      200
+      now - lastAuraTimeRef.current < 200
     ) {
       return;
     }
@@ -83,16 +80,21 @@ function Camera() {
           20
         )
     );
-  }, [motion]);
+  }, [motion, combo]);
 
   // ==========================================
   // DIBUJAR ESQUELETO
   // ==========================================
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
 
-    if (!canvas || !video || !poseData?.smoothedLandmarks) {
+    if (
+      !canvas ||
+      !video ||
+      !poseData?.smoothedLandmarks
+    ) {
       return;
     }
 
@@ -118,10 +120,6 @@ function Camera() {
         canvas.width,
         canvas.height
       );
-
-      // ==================================
-      // CONEXIONES DEL CUERPO
-      // ==================================
 
       const connections = [
         [0, 1],
@@ -162,10 +160,6 @@ function Camera() {
         [30, 32],
       ];
 
-      // ==================================
-      // FUNCIÓN PARA CONVERTIR COORDENADAS
-      // ==================================
-
       const getPoint = (landmark) => {
         return {
           x: landmark.x * videoWidth,
@@ -173,16 +167,16 @@ function Camera() {
         };
       };
 
-      // ==================================
-      // LÍNEAS
-      // ==================================
-
       ctx.strokeStyle = "#00ffff";
       ctx.lineWidth = 3;
 
       connections.forEach(([start, end]) => {
-        const a = poseData.smoothedLandmarks[start];
-        const b = poseData.smoothedLandmarks[end];
+        const a =
+          poseData.smoothedLandmarks[start];
+
+        const b =
+          poseData.smoothedLandmarks[end];
+
         if (!a || !b) return;
 
         const pointA = getPoint(a);
@@ -203,35 +197,32 @@ function Camera() {
         ctx.stroke();
       });
 
-      // ==================================
-      // PUNTOS
-      // ==================================
+      poseData.smoothedLandmarks.forEach(
+        (landmark) => {
+          const point = getPoint(landmark);
 
-      poseData.smoothedLandmarks.forEach((landmark) => {
-        const point = getPoint(landmark);
+          ctx.beginPath();
 
-        ctx.beginPath();
+          ctx.arc(
+            point.x,
+            point.y,
+            5,
+            0,
+            Math.PI * 2
+          );
 
-        ctx.arc(
-          point.x,
-          point.y,
-          5,
-          0,
-          Math.PI * 2
-        );
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
 
-        ctx.fillStyle = "#ffffff";
-        ctx.fill();
+          ctx.strokeStyle = "#00ffff";
+          ctx.lineWidth = 2;
 
-        ctx.strokeStyle = "#00ffff";
-        ctx.lineWidth = 2;
-
-        ctx.stroke();
-      });
+          ctx.stroke();
+        }
+      );
     };
 
     drawPose();
-
   }, [poseData]);
 
   // ==========================================
@@ -241,32 +232,29 @@ function Camera() {
   useEffect(() => {
     let stream;
 
-    const startCamera =
-      async () => {
-        try {
-          stream =
-            await navigator.mediaDevices.getUserMedia(
-              {
-                video: true,
-                audio: false,
-              }
-            );
-
-          if (
-            videoRef.current
-          ) {
-            videoRef.current.srcObject =
-              stream;
-          }
-        } catch (error) {
-          console.error(
-            "No se pudo acceder a la cámara:",
-            error
+    const startCamera = async () => {
+      try {
+        stream =
+          await navigator.mediaDevices.getUserMedia(
+            {
+              video: true,
+              audio: false,
+            }
           );
 
-          setCameraError(true);
+        if (videoRef.current) {
+          videoRef.current.srcObject =
+            stream;
         }
-      };
+      } catch (error) {
+        console.error(
+          "No se pudo acceder a la cámara:",
+          error
+        );
+
+        setCameraError(true);
+      }
+    };
 
     startCamera();
 
@@ -274,9 +262,8 @@ function Camera() {
       if (stream) {
         stream
           .getTracks()
-          .forEach(
-            (track) =>
-              track.stop()
+          .forEach((track) =>
+            track.stop()
           );
       }
     };
@@ -286,28 +273,21 @@ function Camera() {
   // ESTADO
   // ==========================================
 
-  const getMotionState =
-    () => {
-      if (
-        displayMotion < 3
-      ) {
-        return "🗿 QUIETO";
-      }
+  const getMotionState = () => {
+    if (displayMotion < 3) {
+      return "🗿 QUIETO";
+    }
 
-      if (
-        displayMotion < 8
-      ) {
-        return "👋 MOVIMIENTO";
-      }
+    if (displayMotion < 8) {
+      return "👋 MOVIMIENTO";
+    }
 
-      if (
-        displayMotion < 15
-      ) {
-        return "🔥 MOVIMIENTO FUERTE";
-      }
+    if (displayMotion < 15) {
+      return "🔥 MOVIMIENTO FUERTE";
+    }
 
-      return "⚡ MOVIMIENTO EXTREMO";
-    };
+    return "⚡ MOVIMIENTO EXTREMO";
+  };
 
   // ==========================================
   // UI
@@ -316,33 +296,21 @@ function Camera() {
   return (
     <section className="camera-screen">
 
-      <div className="aura-header">
-
-        <p>AURA</p>
-
-        <h2>
-          {aura.toLocaleString()}
-        </h2>
-
-        <span className="combo-display">
-          ⚡ COMBO x
-          {Math.max(
-            Math.floor(combo),
-            1
-          )}
-        </span>
-
-      </div>
-
       <div className="camera-container">
 
         {cameraError ? (
-          <p>
-            No pudimos acceder
-            a tu cámara 📷
-          </p>
+          <div className="camera-error">
+            <p>
+              No pudimos acceder
+              a tu cámara 📷
+            </p>
+          </div>
         ) : (
           <>
+            {/* =========================
+                CÁMARA
+            ========================= */}
+
             <video
               ref={videoRef}
               autoPlay
@@ -353,121 +321,83 @@ function Camera() {
               }
             />
 
+            {/* =========================
+                ESQUELETO
+            ========================= */}
+
             <canvas
               ref={canvasRef}
               className="pose-canvas"
             />
 
+            {/* =========================
+                EFECTOS
+            ========================= */}
+
             <AuraEffects
               poseData={poseData}
               motion={displayMotion}
             />
+
+            {/* =========================
+                HUD DEL JUEGO
+            ========================= */}
+
+            <div className="game-hud">
+
+              {/* AURA */}
+
+              <div className="hud-aura">
+                <span>AURA</span>
+
+                <strong>
+                  {aura.toLocaleString()}
+                </strong>
+              </div>
+
+              {/* COMBO */}
+
+              <div className="hud-combo">
+                ⚡ COMBO x
+                {Math.max(
+                  Math.floor(combo),
+                  1
+                )}
+              </div>
+
+              {/* MOVIMIENTO */}
+
+              <div className="hud-motion">
+
+                <span>
+                  MOVIMIENTO
+                </span>
+
+                <strong>
+                  {displayMotion}
+                </strong>
+
+              </div>
+
+              {/* ESTADO */}
+
+              <div className="hud-state">
+                {getMotionState()}
+              </div>
+
+            </div>
+
           </>
         )}
 
       </div>
 
-      {/* PANEL DE CALIBRACIÓN */}
-
-      <div className="debug-panel">
-
-        <div>
-          <span>
-            MOVIMIENTO
-          </span>
-
-          <strong>
-            {displayMotion}
-          </strong>
-        </div>
-
-        <div>
-          <span>
-            COMBO
-          </span>
-
-          <strong>
-            x
-            {Math.max(
-              Math.floor(combo),
-              1
-            )}
-          </strong>
-        </div>
-
-        <div>
-          <span>
-            ESTADO
-          </span>
-
-          <strong>
-            {getMotionState()}
-          </strong>
-        </div>
-
-      </div>
-
-      <div className="pose-debug">
-
-        <div>
-          <span>CABEZA</span>
-          <strong>
-            {poseData
-              ? poseData.head.toFixed(3)
-              : "0.000"}
-          </strong>
-        </div>
-
-        <div>
-          <span>MANO IZQ.</span>
-          <strong>
-            {poseData
-              ? poseData.leftHand.toFixed(3)
-              : "0.000"}
-          </strong>
-        </div>
-
-        <div>
-          <span>MANO DER.</span>
-          <strong>
-            {poseData
-              ? poseData.rightHand.toFixed(3)
-              : "0.000"}
-          </strong>
-        </div>
-
-        <div>
-          <span>BRAZO IZQ.</span>
-          <strong>
-            {poseData
-              ? poseData.leftArm.toFixed(3)
-              : "0.000"}
-          </strong>
-        </div>
-
-        <div>
-          <span>BRAZO DER.</span>
-          <strong>
-            {poseData
-              ? poseData.rightArm.toFixed(3)
-              : "0.000"}
-          </strong>
-        </div>
-
-        <div>
-          <span>TORSO</span>
-          <strong>
-            {poseData
-              ? poseData.torso.toFixed(3)
-              : "0.000"}
-          </strong>
-        </div>
-
-      </div>
+      {/* =========================
+          MENSAJE
+      ========================= */}
 
       <p className="camera-message">
-        🗿 Muévete para generar
-        aura...
+        🗿 Muévete para generar aura...
       </p>
 
     </section>
