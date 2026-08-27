@@ -154,7 +154,6 @@ button {
 /* =========================
    ESQUELETO
 ========================= */
-
 .pose-canvas {
   position: absolute;
 
@@ -166,13 +165,13 @@ button {
   pointer-events: none;
 
   z-index: 2;
-}
 
+  transform: scaleX(-1);
+}
 
 /* =========================
    EFECTOS DE AURA
 ========================= */
-
 .aura-effects {
   position: absolute;
 
@@ -184,6 +183,8 @@ button {
   pointer-events: none;
 
   z-index: 3;
+
+  transform: scaleX(-1);
 }
 
 
