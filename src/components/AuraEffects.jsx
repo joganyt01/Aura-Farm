@@ -322,47 +322,141 @@ function AuraEffects({ poseData, motion }) {
 
       ctx.globalAlpha = 1;
 
-      // =====================================
-      // AURA DE LA CABEZA
-      // =====================================
+    // =====================================
+// AURA DE LA CABEZA
+// =====================================
 
-      if (motion > 3) {
-        const head =
-          getPoint(nose);
+if (motion > 3) {
+  const head = getPoint(nose);
 
-        const radius =
-          35 +
-          auraPower * 35;
+  // Tiempo para crear el efecto de pulso
+  const pulse =
+    Math.sin(performance.now() * 0.008) * 5;
 
-        ctx.beginPath();
+  const radius =
+    35 +
+    auraPower * 35 +
+    pulse;
 
-        ctx.arc(
-          head.x,
-          head.y,
-          radius,
-          0,
-          Math.PI * 2
-        );
+  // =====================================
+  // CÍRCULO PRINCIPAL
+  // =====================================
 
-        ctx.strokeStyle =
-          `rgba(0,255,255,${
-            0.2 +
-            auraPower * 0.5
-          })`;
+  ctx.beginPath();
 
-        ctx.lineWidth = 3;
+  ctx.arc(
+    head.x,
+    head.y,
+    radius,
+    0,
+    Math.PI * 2
+  );
 
-        ctx.shadowBlur =
-          25;
+  ctx.strokeStyle =
+    `rgba(0,255,255,${
+      0.25 +
+      auraPower * 0.5
+    })`;
 
-        ctx.shadowColor =
-          "#00ffff";
+  ctx.lineWidth =
+    3 + auraPower * 2;
 
-        ctx.stroke();
+  ctx.shadowBlur =
+    25 + auraPower * 15;
 
-        ctx.shadowBlur =
-          0;
-      }
+  ctx.shadowColor =
+    "#00ffff";
+
+  ctx.stroke();
+
+  ctx.shadowBlur = 0;
+
+  // =====================================
+  // SEGUNDO ANILLO
+  // =====================================
+
+  if (auraPower > 0.35) {
+    ctx.beginPath();
+
+    ctx.arc(
+      head.x,
+      head.y,
+      radius + 12,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.strokeStyle =
+      `rgba(255,255,255,${
+        0.15 + auraPower * 0.25
+      })`;
+
+    ctx.lineWidth = 1.5;
+
+    ctx.shadowBlur = 15;
+
+    ctx.shadowColor =
+      "#ffffff";
+
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+  }
+
+  // =====================================
+  // PARTÍCULAS DE CABEZA
+  // =====================================
+
+  if (motion > 5) {
+
+    const headParticles =
+      Math.floor(auraPower * 3) + 1;
+
+    for (
+      let i = 0;
+      i < headParticles;
+      i++
+    ) {
+
+      const angle =
+        Math.random() *
+        Math.PI *
+        2;
+
+      const distance =
+        radius +
+        Math.random() * 15;
+
+      particlesRef.current.push({
+
+        x:
+          head.x +
+          Math.cos(angle) *
+          distance,
+
+        y:
+          head.y +
+          Math.sin(angle) *
+          distance,
+
+        vx:
+          Math.cos(angle) *
+          (0.3 + auraPower),
+
+        vy:
+          Math.sin(angle) *
+          (0.3 + auraPower),
+
+        life: 1,
+
+        size:
+          Math.random() *
+          3 +
+          1,
+      });
+    }
+  }
+}
 
       // =====================================
       // RAYOS
