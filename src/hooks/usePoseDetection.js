@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import {
     FilesetResolver,
     PoseLandmarker,
+    HandLandmarker,
 } from "@mediapipe/tasks-vision";
 
 function usePoseDetection(videoRef, cameraReady) {
     const [poseData, setPoseData] = useState(null);
 
     const poseLandmarkerRef = useRef(null);
+    const handLandmarkerRef = useRef(null);
     const animationRef = useRef(null);
 
     const previousLandmarksRef = useRef(null);
@@ -29,57 +31,57 @@ function usePoseDetection(videoRef, cameraReady) {
             );
         };
 
-      const calculateZoneMovement = (
-  current,
-  previous,
-  indexes
-) => {
-  if (!previous) return 0;
+        const calculateZoneMovement = (
+            current,
+            previous,
+            indexes
+        ) => {
+            if (!previous) return 0;
 
-  let total = 0;
-  let count = 0;
+            let total = 0;
+            let count = 0;
 
-  indexes.forEach((index) => {
-    const currentPoint = current[index];
-    const previousPoint = previous[index];
+            indexes.forEach((index) => {
+                const currentPoint = current[index];
+                const previousPoint = previous[index];
 
-    if (!currentPoint || !previousPoint) {
-      return;
-    }
+                if (!currentPoint || !previousPoint) {
+                    return;
+                }
 
-    // Ignorar puntos con poca confianza
-    if (
-      currentPoint.visibility !== undefined &&
-      currentPoint.visibility < 0.5
-    ) {
-      return;
-    }
+                // Ignorar puntos con poca confianza
+                if (
+                    currentPoint.visibility !== undefined &&
+                    currentPoint.visibility < 0.5
+                ) {
+                    return;
+                }
 
-    const dx =
-      currentPoint.x - previousPoint.x;
+                const dx =
+                    currentPoint.x - previousPoint.x;
 
-    const dy =
-      currentPoint.y - previousPoint.y;
+                const dy =
+                    currentPoint.y - previousPoint.y;
 
-    const distance = Math.sqrt(
-      dx * dx + dy * dy
-    );
+                const distance = Math.sqrt(
+                    dx * dx + dy * dy
+                );
 
-    total += distance;
-    count++;
-  });
+                total += distance;
+                count++;
+            });
 
-  if (count === 0) return 0;
+            if (count === 0) return 0;
 
-  const movement = total / count;
+            const movement = total / count;
 
-  // FILTRO DE MICRO-MOVIMIENTOS
-  if (movement < 0.015) {
-    return 0;
-  }
+            // FILTRO DE MICRO-MOVIMIENTOS
+            if (movement < 0.015) {
+                return 0;
+            }
 
-  return movement;
-};
+            return movement;
+        };
 
         const initializePose = async () => {
             try {
@@ -107,6 +109,25 @@ function usePoseDetection(videoRef, cameraReady) {
                         }
                     );
 
+                const handLandmarker =
+                    await HandLandmarker.createFromOptions(
+                        vision,
+                        {
+                            baseOptions: {
+                                modelAssetPath:
+                                    "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+                            },
+
+                            runningMode: "VIDEO",
+
+                            numHands: 2,
+
+                            minHandDetectionConfidence: 0.5,
+                            minHandPresenceConfidence: 0.5,
+                            minTrackingConfidence: 0.5,
+                        }
+                    );
+
                 if (cancelled) {
                     poseLandmarker.close();
                     return;
@@ -114,6 +135,9 @@ function usePoseDetection(videoRef, cameraReady) {
 
                 poseLandmarkerRef.current =
                     poseLandmarker;
+
+                handLandmarkerRef.current =
+                    handLandmarker;
 
                 detectPose();
 
@@ -154,6 +178,19 @@ function usePoseDetection(videoRef, cameraReady) {
                     timestamp
                 );
 
+            const handLandmarker =
+                handLandmarkerRef.current;
+
+            let handResult = null;
+
+            if (handLandmarker) {
+                handResult =
+                    handLandmarker.detectForVideo(
+                        video,
+                        timestamp
+                    );
+            }
+
             if (
                 result.landmarks &&
                 result.landmarks.length > 0
@@ -162,46 +199,46 @@ function usePoseDetection(videoRef, cameraReady) {
                     result.landmarks[0];
 
                 // ==================================
-// SUAVIZADO DE LANDMARKS
-// ==================================
+                // SUAVIZADO DE LANDMARKS
+                // ==================================
 
-let smoothedLandmarks =
-  smoothedLandmarksRef.current;
+                let smoothedLandmarks =
+                    smoothedLandmarksRef.current;
 
-if (!smoothedLandmarks) {
-  smoothedLandmarks =
-    landmarks.map((point) => ({
-      ...point,
-    }));
+                if (!smoothedLandmarks) {
+                    smoothedLandmarks =
+                        landmarks.map((point) => ({
+                            ...point,
+                        }));
 
-  smoothedLandmarksRef.current =
-    smoothedLandmarks;
-} else {
-  smoothedLandmarks =
-    landmarks.map((point, index) => {
-      const previous =
-        smoothedLandmarks[index];
+                    smoothedLandmarksRef.current =
+                        smoothedLandmarks;
+                } else {
+                    smoothedLandmarks =
+                        landmarks.map((point, index) => {
+                            const previous =
+                                smoothedLandmarks[index];
 
-      const smoothing = 0.25;
+                            const smoothing = 0.25;
 
-      return {
-        ...point,
+                            return {
+                                ...point,
 
-        x:
-          previous.x +
-          (point.x - previous.x) *
-            smoothing,
+                                x:
+                                    previous.x +
+                                    (point.x - previous.x) *
+                                    smoothing,
 
-        y:
-          previous.y +
-          (point.y - previous.y) *
-            smoothing,
-      };
-    });
+                                y:
+                                    previous.y +
+                                    (point.y - previous.y) *
+                                    smoothing,
+                            };
+                        });
 
-  smoothedLandmarksRef.current =
-    smoothedLandmarks;
-}
+                    smoothedLandmarksRef.current =
+                        smoothedLandmarks;
+                }
 
                 const previous =
                     previousLandmarksRef.current;
@@ -301,6 +338,9 @@ if (!smoothedLandmarks) {
                 setPoseData({
                     smoothedLandmarks,
 
+                    hands:
+                        handResult?.landmarks || [],
+
                     head:
                         headMovement,
 
@@ -326,8 +366,8 @@ if (!smoothedLandmarks) {
                         rightLegMovement,
                 });
 
-               previousLandmarksRef.current =
-  smoothedLandmarks;
+                previousLandmarksRef.current =
+                    smoothedLandmarks;
             }
 
             animationRef.current =
@@ -353,6 +393,15 @@ if (!smoothedLandmarks) {
                 poseLandmarkerRef.current.close();
 
                 poseLandmarkerRef.current =
+                    null;
+            }
+
+            if (
+                handLandmarkerRef.current
+            ) {
+                handLandmarkerRef.current.close();
+
+                handLandmarkerRef.current =
                     null;
             }
 
