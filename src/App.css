@@ -562,21 +562,20 @@ button {
 
   .camera-screen {
     padding: 8px;
-
     gap: 8px;
   }
 
   .camera-container {
     width: auto;
-
     height: min(72dvh, 700px);
-
     aspect-ratio: 9 / 16;
-
     max-width: 94vw;
-
     border-radius: 14px;
   }
+
+  /* =========================
+     AURA
+  ========================= */
 
   .hud-aura {
     top: 15px;
@@ -585,13 +584,17 @@ button {
 
   .hud-aura span {
     font-size: 10px;
-
     letter-spacing: 3px;
   }
 
   .hud-aura strong {
-    font-size: 38px;
+    font-size: 32px;
   }
+
+
+  /* =========================
+     COMBO
+  ========================= */
 
   .hud-combo {
     top: 15px;
@@ -599,12 +602,76 @@ button {
 
     padding: 7px 10px;
 
-    font-size: 13px;
+    font-size: 12px;
   }
+
+
+  /* =========================
+     INFORMACIÓN DE LA POSE
+  ========================= */
+
+  .hud-challenge {
+    position: absolute;
+
+    top: 82px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    width: 90%;
+
+    text-align: center;
+  }
+
+  .hud-challenge span {
+    display: block;
+
+    font-size: 10px;
+
+    letter-spacing: 2px;
+
+    opacity: 0.7;
+  }
+
+  .hud-challenge strong {
+    display: block;
+
+    margin-top: 3px;
+
+    font-size: 21px;
+  }
+
+  .hud-challenge small {
+    display: block;
+
+    margin-top: 3px;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+
+    opacity: 0.7;
+  }
+
+
+  /* =========================
+     TEMPORIZADOR
+  ========================= */
+
+  .hud-timer {
+    top: 61%;
+
+    font-size: 55px;
+  }
+
+
+  /* =========================
+     MOVIMIENTO
+  ========================= */
 
   .hud-motion {
     left: 15px;
-    bottom: 15px;
+    bottom: 48px;
 
     padding: 6px 9px;
 
@@ -619,14 +686,46 @@ button {
     font-size: 13px;
   }
 
+
+  /* =========================
+     ESTADO
+  ========================= */
+
   .hud-state {
     right: 15px;
-    bottom: 15px;
+    bottom: 48px;
 
     padding: 6px 9px;
 
     font-size: 10px;
   }
+
+
+  /* =========================
+     BOTÓN SIMULAR POSE
+  ========================= */
+
+  .debug-pose-button {
+    position: absolute;
+
+    bottom: 8px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    z-index: 20;
+
+    padding: 6px 12px;
+
+    font-size: 10px;
+
+    pointer-events: auto;
+  }
+
+
+  /* =========================
+     MENSAJE
+  ========================= */
 
   .camera-message {
     font-size: 12px;
@@ -642,7 +741,6 @@ button {
 
   .camera-screen {
     padding: 8px;
-
     gap: 5px;
   }
 
@@ -670,6 +768,19 @@ button {
     right: 15px;
   }
 
+  .hud-challenge {
+    top: 55px;
+  }
+
+  .hud-challenge strong {
+    font-size: 18px;
+  }
+
+  .hud-timer {
+    top: 60%;
+    font-size: 45px;
+  }
+
   .hud-motion {
     bottom: 10px;
     left: 15px;
@@ -678,6 +789,10 @@ button {
   .hud-state {
     bottom: 10px;
     right: 15px;
+  }
+
+  .debug-pose-button {
+    bottom: 8px;
   }
 
   .camera-message {
