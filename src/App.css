@@ -392,7 +392,8 @@ button {
 }
 
 .result-emoji {
-  font-size: 90px;
+  font-size: 70px;
+  line-height: 1;
 }
 
 .result-content h1 {
@@ -730,6 +731,8 @@ button {
   .camera-message {
     font-size: 12px;
   }
+
+  
 }
 
 
