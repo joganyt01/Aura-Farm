@@ -30,6 +30,25 @@ function Camera({
     cameraReady
   );
 
+  useEffect(() => {
+  if (!poseData?.hands?.length) {
+    return;
+  }
+
+  poseData.hands.forEach((hand, index) => {
+    const wrist = hand[0];
+    const indexTip = hand[8];
+
+    console.log(
+      `MANO ${index + 1}`,
+      "Muñeca:",
+      wrist,
+      "Punta índice:",
+      indexTip
+    );
+  });
+}, [poseData?.hands]);
+
   // ==========================================
   // MOVIMIENTO MOSTRADO
   // ==========================================
@@ -195,6 +214,7 @@ function Camera({
         canvas.width,
         canvas.height
       );
+      
 
       const connections = [
         [0, 1],
@@ -241,6 +261,51 @@ function Camera({
           y: landmark.y * videoHeight,
         };
       };
+
+      // ==================================
+// DEBUG MEWING
+// ==================================
+
+const drawDebugPoint = (
+  landmark,
+  color,
+  radius = 10
+) => {
+  if (!landmark) return;
+
+  const point = getPoint(landmark);
+
+  ctx.beginPath();
+
+  ctx.arc(
+    point.x,
+    point.y,
+    radius,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fillStyle = color;
+  ctx.fill();
+};
+
+// PUNTA DEL ÍNDICE
+if (poseData.hands?.length) {
+  poseData.hands.forEach((hand) => {
+    drawDebugPoint(
+      hand[8],
+      "#ff0000",
+      10
+    );
+  });
+}
+
+// ZONA DE LA CARA
+drawDebugPoint(
+  poseData.smoothedLandmarks[0],
+  "#0088ff",
+  10
+);
 
       ctx.strokeStyle = "#00ffff";
       ctx.lineWidth = 3;
