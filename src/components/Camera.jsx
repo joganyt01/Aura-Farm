@@ -18,7 +18,7 @@ function Camera({
   const mewingCompletedRef = useRef(false);
 
   const sixSevenLastYRef = useRef(null);
-const sixSevenDirectionRef = useRef(null);
+  const sixSevenPhaseRef = useRef(0);
 
   const [cameraError, setCameraError] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
@@ -137,50 +137,63 @@ const sixSevenDirectionRef = useRef(null);
 
     setMewingDetected(detected);
 
-   if (detected && gameState === "playing" && pose?.id === "mewing") {
-  if (!mewingCompletedRef.current) {
-    mewingCompletedRef.current = true;
-    onPoseComplete();
-  }
-}
+    if (detected && gameState === "playing" && pose?.id === "mewing") {
+      if (!mewingCompletedRef.current) {
+        mewingCompletedRef.current = true;
+        onPoseComplete();
+      }
+    }
   }, [poseData]);
-//detecccion d emewing
+  //detecccion d emewing
   useEffect(() => {
-  if (pose?.id !== "mewing") {
-    mewingCompletedRef.current = false;
-  }
-}, [pose]);
+    if (pose?.id !== "mewing") {
+      mewingCompletedRef.current = false;
+    }
+  }, [pose]);
 
-// DETECCIÓN SIX SEVEN
+ // DETECCIÓN SIX SEVEN
 useEffect(() => {
-  if (!poseData?.hands?.length) {
-    setSixSevenDirection("QUIETO");
+  if (!poseData?.hands || poseData.hands.length < 2) {
+    setSixSevenDirection("NECESITAS 2 MANOS");
     return;
   }
 
-  const hand = poseData.hands[0];
-  const wrist = hand?.[0];
+  const hand1 = poseData.hands[0];
+  const hand2 = poseData.hands[1];
 
-  if (!wrist) return;
+  const wrist1 = hand1?.[0];
+  const wrist2 = hand2?.[0];
 
-  const currentY = wrist.y;
-  const previousY = sixSevenLastYRef.current;
+  if (!wrist1 || !wrist2) return;
 
-  if (previousY !== null) {
-    const difference = currentY - previousY;
+  const previous = sixSevenLastYRef.current;
 
-    if (difference < -0.015) {
-      sixSevenDirectionRef.current = "ARRIBA";
-      setSixSevenDirection("⬆️ MANO ARRIBA");
+  if (previous) {
+    const movement1 = wrist1.y - previous.y1;
+    const movement2 = wrist2.y - previous.y2;
+
+    const threshold = 0.015;
+
+    const hand1Up = movement1 < -threshold;
+    const hand1Down = movement1 > threshold;
+
+    const hand2Up = movement2 < -threshold;
+    const hand2Down = movement2 > threshold;
+
+    // Una mano sube mientras la otra baja
+    if (hand1Up && hand2Down) {
+      setSixSevenDirection("⬆️ IZQ / ⬇️ DER");
     }
 
-    if (difference > 0.015) {
-      sixSevenDirectionRef.current = "ABAJO";
-      setSixSevenDirection("⬇️ MANO ABAJO");
+    if (hand1Down && hand2Up) {
+      setSixSevenDirection("⬇️ IZQ / ⬆️ DER");
     }
   }
 
-  sixSevenLastYRef.current = currentY;
+  sixSevenLastYRef.current = {
+    y1: wrist1.y,
+    y2: wrist2.y,
+  };
 }, [poseData]);
   // ==========================================
   // SISTEMA DE AURA CORPORAL
@@ -720,8 +733,8 @@ useEffect(() => {
               </div>
 
               <div className="hud-six-seven">
-  SIX SEVEN: {sixSevenDirection}
-</div>
+                SIX SEVEN: {sixSevenDirection}
+              </div>
 
               <div className="hud-timer">
                 {timeLeft}s
