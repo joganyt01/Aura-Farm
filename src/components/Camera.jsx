@@ -15,6 +15,10 @@ function Camera({
   const canvasRef = useRef(null);
 
   const lastAuraTimeRef = useRef(0);
+  const mewingCompletedRef = useRef(false);
+
+  const sixSevenLastYRef = useRef(null);
+const sixSevenDirectionRef = useRef(null);
 
   const [cameraError, setCameraError] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
@@ -32,25 +36,27 @@ function Camera({
 
   const [mewingDetected, setMewingDetected] = useState(false);
 
+  const [sixSevenDirection, setSixSevenDirection] = useState("QUIETO");
+
   useEffect(() => {
-  if (!poseData?.hands?.length) {
-    return;
-  }
+    if (!poseData?.hands?.length) {
+      return;
+    }
 
-  poseData.hands.forEach((hand, index) => {
-    const wrist = hand[0];
-    const indexTip = hand[8];
+    poseData.hands.forEach((hand, index) => {
+      const wrist = hand[0];
+      const indexTip = hand[8];
 
-    console.log(
-      `MANO ${index + 1}`,
-      "Muñeca:",
-      wrist,
-      "Punta índice:",
-      indexTip
-    );
-    
-  });
-}, [poseData?.hands]);
+      console.log(
+        `MANO ${index + 1}`,
+        "Muñeca:",
+        wrist,
+        "Punta índice:",
+        indexTip
+      );
+
+    });
+  }, [poseData?.hands]);
 
   // ==========================================
   // MOVIMIENTO MOSTRADO
@@ -65,71 +71,116 @@ function Camera({
   }, [motion]);
 
   // DETECCIÓN MEWING
-useEffect(() => {
-  if (!poseData?.hands?.length || !poseData?.smoothedLandmarks) {
-    setMewingDetected(false);
-    return;
-  }
-
-  const mouthLeft = poseData.smoothedLandmarks[9];
-  const mouthRight = poseData.smoothedLandmarks[10];
-
-  if (!mouthLeft || !mouthRight) {
-    setMewingDetected(false);
-    return;
-  }
-
-  const mouthCenter = {
-    x: (mouthLeft.x + mouthRight.x) / 2,
-    y: (mouthLeft.y + mouthRight.y) / 2,
-  };
-
-  let detected = false;
-
-  poseData.hands.forEach((hand) => {
-    const wrist = hand[0];
-    const indexTip = hand[8];
-    const middleTip = hand[12];
-    const ringTip = hand[16];
-    const pinkyTip = hand[20];
-
-    if (
-      !wrist ||
-      !indexTip ||
-      !middleTip ||
-      !ringTip ||
-      !pinkyTip
-    ) {
+  useEffect(() => {
+    if (!poseData?.hands?.length || !poseData?.smoothedLandmarks) {
+      setMewingDetected(false);
       return;
     }
 
-    const distance = (a, b) => {
-      const dx = a.x - b.x;
-      const dy = a.y - b.y;
+    const mouthLeft = poseData.smoothedLandmarks[9];
+    const mouthRight = poseData.smoothedLandmarks[10];
 
-      return Math.sqrt(dx * dx + dy * dy);
+    if (!mouthLeft || !mouthRight) {
+      setMewingDetected(false);
+      return;
+    }
+
+    const mouthCenter = {
+      x: (mouthLeft.x + mouthRight.x) / 2,
+      y: (mouthLeft.y + mouthRight.y) / 2,
     };
 
-    const mouthDistance = distance(indexTip, mouthCenter);
+    let detected = false;
 
-    const indexDistance = distance(wrist, indexTip);
-    const middleDistance = distance(wrist, middleTip);
-    const ringDistance = distance(wrist, ringTip);
-    const pinkyDistance = distance(wrist, pinkyTip);
+    poseData.hands.forEach((hand) => {
+      const wrist = hand[0];
+      const indexTip = hand[8];
+      const middleTip = hand[12];
+      const ringTip = hand[16];
+      const pinkyTip = hand[20];
 
-    const indexExtended =
-      indexDistance > middleDistance * 1.5 &&
-      indexDistance > ringDistance * 1.5 &&
-      indexDistance > pinkyDistance * 1.5;
+      if (
+        !wrist ||
+        !indexTip ||
+        !middleTip ||
+        !ringTip ||
+        !pinkyTip
+      ) {
+        return;
+      }
 
-    const fingerNearMouth = mouthDistance < 0.13;
+      const distance = (a, b) => {
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
 
-    if (indexExtended && fingerNearMouth) {
-      detected = true;
+        return Math.sqrt(dx * dx + dy * dy);
+      };
+
+      const mouthDistance = distance(indexTip, mouthCenter);
+
+      const indexDistance = distance(wrist, indexTip);
+      const middleDistance = distance(wrist, middleTip);
+      const ringDistance = distance(wrist, ringTip);
+      const pinkyDistance = distance(wrist, pinkyTip);
+
+      const indexExtended =
+        indexDistance > middleDistance * 1.5 &&
+        indexDistance > ringDistance * 1.5 &&
+        indexDistance > pinkyDistance * 1.5;
+
+      const fingerNearMouth = mouthDistance < 0.13;
+
+      if (indexExtended && fingerNearMouth) {
+        detected = true;
+      }
+    });
+
+    setMewingDetected(detected);
+
+   if (detected && gameState === "playing" && pose?.id === "mewing") {
+  if (!mewingCompletedRef.current) {
+    mewingCompletedRef.current = true;
+    onPoseComplete();
+  }
+}
+  }, [poseData]);
+//detecccion d emewing
+  useEffect(() => {
+  if (pose?.id !== "mewing") {
+    mewingCompletedRef.current = false;
+  }
+}, [pose]);
+
+// DETECCIÓN SIX SEVEN
+useEffect(() => {
+  if (!poseData?.hands?.length) {
+    setSixSevenDirection("QUIETO");
+    return;
+  }
+
+  const hand = poseData.hands[0];
+  const wrist = hand?.[0];
+
+  if (!wrist) return;
+
+  const currentY = wrist.y;
+  const previousY = sixSevenLastYRef.current;
+
+  if (previousY !== null) {
+    const difference = currentY - previousY;
+
+    if (difference < -0.015) {
+      sixSevenDirectionRef.current = "ARRIBA";
+      setSixSevenDirection("⬆️ MANO ARRIBA");
     }
-  });
 
-  setMewingDetected(detected);
+    if (difference > 0.015) {
+      sixSevenDirectionRef.current = "ABAJO";
+      setSixSevenDirection("⬇️ MANO ABAJO");
+    }
+  }
+
+  sixSevenLastYRef.current = currentY;
 }, [poseData]);
   // ==========================================
   // SISTEMA DE AURA CORPORAL
@@ -285,7 +336,7 @@ useEffect(() => {
         canvas.width,
         canvas.height
       );
-      
+
 
       const connections = [
         [0, 1],
@@ -334,137 +385,137 @@ useEffect(() => {
       };
 
       // ==================================
-// DEBUG MEWING
-// ==================================
+      // DEBUG MEWING
+      // ==================================
 
-const drawDebugPoint = (
-  landmark,
-  color,
-  radius = 10
-) => {
-  if (!landmark) return;
+      const drawDebugPoint = (
+        landmark,
+        color,
+        radius = 10
+      ) => {
+        if (!landmark) return;
 
-  const point = getPoint(landmark);
+        const point = getPoint(landmark);
 
-  ctx.beginPath();
+        ctx.beginPath();
 
-  ctx.arc(
-    point.x,
-    point.y,
-    radius,
-    0,
-    Math.PI * 2
-  );
-
-  ctx.fillStyle = color;
-  ctx.fill();
-};
-
-// TEMPORARY DEBUG DISTANCIA MEWING
-if (poseData.hands?.length) {
-  poseData.hands.forEach((hand, index) => {
-    const indexTip = hand[8];
-
-    const mouthLeft =
-      poseData.smoothedLandmarks[9];
-
-    const mouthRight =
-      poseData.smoothedLandmarks[10];
-
-    if (
-      indexTip &&
-      mouthLeft &&
-      mouthRight
-    ) {
-      const mouthCenter = {
-        x:
-          (mouthLeft.x +
-            mouthRight.x) /
-          2,
-
-        y:
-          (mouthLeft.y +
-            mouthRight.y) /
-          2,
-      };
-
-      const dx =
-        indexTip.x -
-        mouthCenter.x;
-
-      const dy =
-        indexTip.y -
-        mouthCenter.y;
-
-      const distance =
-        Math.sqrt(
-          dx * dx +
-          dy * dy
+        ctx.arc(
+          point.x,
+          point.y,
+          radius,
+          0,
+          Math.PI * 2
         );
 
-      console.log(
-        `MEWING MANO ${index + 1} - DISTANCIA:`,
-        distance.toFixed(3)
+        ctx.fillStyle = color;
+        ctx.fill();
+      };
+
+      // TEMPORARY DEBUG DISTANCIA MEWING
+      if (poseData.hands?.length) {
+        poseData.hands.forEach((hand, index) => {
+          const indexTip = hand[8];
+
+          const mouthLeft =
+            poseData.smoothedLandmarks[9];
+
+          const mouthRight =
+            poseData.smoothedLandmarks[10];
+
+          if (
+            indexTip &&
+            mouthLeft &&
+            mouthRight
+          ) {
+            const mouthCenter = {
+              x:
+                (mouthLeft.x +
+                  mouthRight.x) /
+                2,
+
+              y:
+                (mouthLeft.y +
+                  mouthRight.y) /
+                2,
+            };
+
+            const dx =
+              indexTip.x -
+              mouthCenter.x;
+
+            const dy =
+              indexTip.y -
+              mouthCenter.y;
+
+            const distance =
+              Math.sqrt(
+                dx * dx +
+                dy * dy
+              );
+
+            console.log(
+              `MEWING MANO ${index + 1} - DISTANCIA:`,
+              distance.toFixed(3)
+            );
+
+            const wrist = hand[0];
+
+            const indexDistance =
+              Math.sqrt(
+                Math.pow(hand[8].x - wrist.x, 2) +
+                Math.pow(hand[8].y - wrist.y, 2)
+              );
+
+            const middleDistance =
+              Math.sqrt(
+                Math.pow(hand[12].x - wrist.x, 2) +
+                Math.pow(hand[12].y - wrist.y, 2)
+              );
+
+            const ringDistance =
+              Math.sqrt(
+                Math.pow(hand[16].x - wrist.x, 2) +
+                Math.pow(hand[16].y - wrist.y, 2)
+              );
+
+            const pinkyDistance =
+              Math.sqrt(
+                Math.pow(hand[20].x - wrist.x, 2) +
+                Math.pow(hand[20].y - wrist.y, 2)
+              );
+
+            console.log(
+              `MEWING MANO ${index + 1}`,
+              "Índice:",
+              indexDistance.toFixed(3),
+              "Medio:",
+              middleDistance.toFixed(3),
+              "Anular:",
+              ringDistance.toFixed(3),
+              "Meñique:",
+              pinkyDistance.toFixed(3)
+            );
+          }
+        });
+      }
+
+      // PUNTA DEL ÍNDICE
+      if (poseData.hands?.length) {
+        poseData.hands.forEach((hand) => {
+          drawDebugPoint(
+            hand[8],
+            "#ff0000",
+            10
+          );
+        });
+      }
+
+      // ZONA DE LA CARA
+      drawDebugPoint(
+        poseData.smoothedLandmarks[0],
+        "#0088ff",
+        10
       );
-
-      const wrist = hand[0];
-
-const indexDistance =
-  Math.sqrt(
-    Math.pow(hand[8].x - wrist.x, 2) +
-    Math.pow(hand[8].y - wrist.y, 2)
-  );
-
-const middleDistance =
-  Math.sqrt(
-    Math.pow(hand[12].x - wrist.x, 2) +
-    Math.pow(hand[12].y - wrist.y, 2)
-  );
-
-const ringDistance =
-  Math.sqrt(
-    Math.pow(hand[16].x - wrist.x, 2) +
-    Math.pow(hand[16].y - wrist.y, 2)
-  );
-
-const pinkyDistance =
-  Math.sqrt(
-    Math.pow(hand[20].x - wrist.x, 2) +
-    Math.pow(hand[20].y - wrist.y, 2)
-  );
-
-console.log(
-  `MEWING MANO ${index + 1}`,
-  "Índice:",
-  indexDistance.toFixed(3),
-  "Medio:",
-  middleDistance.toFixed(3),
-  "Anular:",
-  ringDistance.toFixed(3),
-  "Meñique:",
-  pinkyDistance.toFixed(3)
-);
-    }
-  });
-}
-
-// PUNTA DEL ÍNDICE
-if (poseData.hands?.length) {
-  poseData.hands.forEach((hand) => {
-    drawDebugPoint(
-      hand[8],
-      "#ff0000",
-      10
-    );
-  });
-}
-
-// ZONA DE LA CARA
-drawDebugPoint(
-  poseData.smoothedLandmarks[0],
-  "#0088ff",
-  10
-);
 
       ctx.strokeStyle = "#00ffff";
       ctx.lineWidth = 3;
@@ -663,9 +714,13 @@ drawDebugPoint(
               </div>
 
               <div className="hud-mewing">
-  {mewingDetected
-    ? "🔥 MEWING DETECTADO"
-    : "❌ MEWING NO DETECTADO"}
+                {mewingDetected
+                  ? "🔥 MEWING DETECTADO"
+                  : "❌ MEWING NO DETECTADO"}
+              </div>
+
+              <div className="hud-six-seven">
+  SIX SEVEN: {sixSevenDirection}
 </div>
 
               <div className="hud-timer">
